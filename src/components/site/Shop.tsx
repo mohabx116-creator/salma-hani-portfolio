@@ -14,7 +14,7 @@ export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
 
   if (items.length === 0) {
     return (
-      <section id="shop" className="py-32 md:py-48 px-6 md:px-12 section-depth">
+      <section id="shop" className="py-32 md:py-48 px-[5vw] section-depth">
         <div className="mx-auto max-w-[1500px] text-center">
           <p className="eyebrow">{t.shop.eyebrow}</p>
           <h2 className="mt-5 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">{t.shop.title}</h2>
@@ -25,7 +25,7 @@ export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
   }
 
   return (
-    <section id="shop" className="py-32 md:py-48 px-6 md:px-12 section-depth">
+    <section id="shop" className="py-32 md:py-48 px-[5vw] section-depth">
       <div className="mx-auto max-w-[1500px]">
         <div className="text-center mb-16">
           <p className="eyebrow">{t.shop.eyebrow}</p>
@@ -41,12 +41,12 @@ export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
                 onClick={() => onSelect(a)}
                 className="block w-full text-start"
               >
-                <div className="relative overflow-hidden bg-stone-soft aspect-[4/5] shadow-soft art-vignette">
+                <div className="relative overflow-hidden bg-stone-soft aspect-[4/5] shadow-soft art-vignette glass-card p-2">
                   <img
                     src={a.image}
                     alt={a.title}
                     loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
+                    className="w-full h-full object-cover brightness-80 transition-all duration-[1600ms] ease-out group-hover:scale-105 group-hover:brightness-100"
                   />
                   <span className="absolute top-4 start-4 bg-background/85 backdrop-blur-sm px-3 py-1 text-[9px] uppercase tracking-[0.3em] text-ink-soft border border-border">
                     {t.shop.available}
@@ -65,7 +65,7 @@ export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
               <button
                 type="button"
                 onClick={() => onSelect(a)}
-                className="mt-5 w-full inline-flex items-center justify-center gap-3 px-6 py-3 border border-foreground text-[10px] uppercase tracking-[0.3em] hover:bg-foreground hover:text-background transition-colors duration-500"
+                className="cinematic-button mt-5 w-full inline-flex items-center justify-center gap-3 px-6 py-3 text-[10px] uppercase tracking-[0.28em]"
               >
                 {t.shop.buy}
               </button>

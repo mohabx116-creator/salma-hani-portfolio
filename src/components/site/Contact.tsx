@@ -6,7 +6,7 @@ export function Contact() {
   const [sent, setSent] = useState(false);
 
   return (
-    <section id="contact" className="py-32 md:py-48 px-6 md:px-12">
+    <section id="contact" className="py-32 md:py-48 px-[5vw]">
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow">{t.contact.eyebrow}</p>
         <h2 className="mt-5 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">{t.contact.title}</h2>
@@ -37,7 +37,7 @@ export function Contact() {
             ) : (
               <button
                 type="submit"
-                className="inline-flex items-center gap-4 px-10 py-4 bg-foreground text-background text-[10px] uppercase tracking-[0.3em] hover:bg-gold transition-colors duration-500"
+                className="cinematic-button inline-flex items-center gap-4 px-10 py-4 text-[10px] uppercase tracking-[0.28em]"
               >
                 {t.contact.send}
               </button>

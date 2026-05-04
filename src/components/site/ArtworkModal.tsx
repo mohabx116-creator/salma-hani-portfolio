@@ -19,7 +19,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
   if (!artwork) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/70 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 fade-up" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 md:p-10 fade-up" onClick={onClose}>
       <button
         onClick={onClose}
         className="absolute top-6 end-6 text-[10px] uppercase tracking-[0.3em] text-ivory hover:text-gold transition-colors"
@@ -27,7 +27,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
         {t.detail.close} x
       </button>
       <div
-        className="relative bg-background max-w-6xl w-full max-h-[90vh] overflow-auto grid grid-cols-1 md:grid-cols-5 gap-0 shadow-frame"
+        className="relative bg-background max-w-6xl w-full max-h-[90vh] overflow-auto grid grid-cols-1 md:grid-cols-5 gap-0 shadow-frame border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="md:col-span-3 bg-bone">
@@ -75,7 +75,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
               <a
                 href="#contact"
                 onClick={onClose}
-                className="inline-flex items-center justify-center px-8 py-4 bg-foreground text-background text-[10px] uppercase tracking-[0.3em] hover:bg-gold transition-colors duration-500"
+                className="cinematic-button inline-flex items-center justify-center px-8 py-4 text-[10px] uppercase tracking-[0.28em]"
               >
                 {t.detail.buy}
               </a>
@@ -83,7 +83,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
             <a
               href="#contact"
               onClick={onClose}
-              className="inline-flex items-center justify-center px-8 py-4 border border-foreground text-foreground text-[10px] uppercase tracking-[0.3em] hover:bg-foreground hover:text-background transition-colors duration-500"
+              className="cinematic-button inline-flex items-center justify-center px-8 py-4 text-[10px] uppercase tracking-[0.28em]"
             >
               {t.detail.inquire}
             </a>

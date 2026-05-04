@@ -4,11 +4,11 @@ import { useLang } from "@/i18n/LanguageContext";
 export function Commissions() {
   const { t } = useLang();
   return (
-    <section id="commissions" className="py-32 md:py-48 px-6 md:px-12">
+    <section id="commissions" className="py-32 md:py-48 px-[5vw]">
       <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-20 items-center">
         <div className="md:col-span-7 md:order-2">
           <div className="relative aspect-[4/5] overflow-hidden bg-bone shadow-frame art-vignette">
-            <img src={abstract} alt="Commission sample" loading="lazy" className="w-full h-full object-cover" />
+            <img src={abstract} alt="Commission sample" loading="lazy" className="w-full h-full object-cover brightness-80 saturate-[0.9]" />
           </div>
         </div>
         <div className="md:col-span-5 md:order-1">
@@ -31,7 +31,7 @@ export function Commissions() {
           </ul>
           <a
             href="#contact"
-            className="mt-12 inline-flex items-center gap-4 px-8 py-4 border border-foreground text-[10px] uppercase tracking-[0.3em] hover:bg-foreground hover:text-background transition-all duration-500"
+            className="cinematic-button mt-12 inline-flex items-center gap-4 px-8 py-4 text-[10px] uppercase tracking-[0.28em]"
           >
             {t.commissions.cta}
           </a>

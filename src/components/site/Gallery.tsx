@@ -11,7 +11,7 @@ export function Gallery({ onSelect }: { onSelect: (a: Artwork) => void }) {
   const items = active === "all" ? artworks : artworks.filter((a) => a.category === active);
 
   return (
-    <section id="works" className="py-32 md:py-48 px-6 md:px-12 bg-bone/40 section-depth">
+    <section id="works" className="py-32 md:py-48 px-[5vw] cinematic-band section-depth">
       <div className="mx-auto max-w-[1500px]">
         <div className="text-center mb-16">
           <p className="eyebrow">{t.gallery.eyebrow}</p>
@@ -19,15 +19,15 @@ export function Gallery({ onSelect }: { onSelect: (a: Artwork) => void }) {
           <p className="mt-4 text-ink-soft font-light">{t.gallery.sub}</p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-16 pb-8 border-b border-border">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-16 pb-8 border-b border-border/70">
           {categories.map((c) => (
             <button
               key={c}
               onClick={() => setActive(c)}
               className={`text-[11px] uppercase tracking-[0.3em] transition-colors duration-500 pb-1 border-b ${
                 active === c
-                  ? "text-foreground border-gold"
-                  : "text-ink-soft/70 border-transparent hover:text-foreground"
+                  ? "text-gold border-gold"
+                  : "text-ink-soft/70 border-transparent hover:text-gold"
               }`}
             >
               {c === "all" ? t.gallery.all : c}
@@ -42,14 +42,14 @@ export function Gallery({ onSelect }: { onSelect: (a: Artwork) => void }) {
               onClick={() => onSelect(a)}
               className={`group block text-start ${i % 3 === 1 ? "md:mt-16" : ""}`}
             >
-              <div className="relative overflow-hidden bg-stone-soft aspect-[4/5] shadow-soft art-vignette">
+              <div className="relative overflow-hidden bg-stone-soft aspect-[4/5] shadow-soft art-vignette glass-card p-2">
                 <img
                   src={a.image}
                   alt={a.title}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
+                  className="w-full h-full object-cover grayscale brightness-80 transition-all duration-[1600ms] ease-out group-hover:scale-105 group-hover:grayscale-0 group-hover:brightness-100"
                 />
-                <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-700" />
+                <div className="absolute inset-2 bg-black/15 group-hover:bg-transparent transition-colors duration-700" />
               </div>
               <div className="mt-4">
                 <h3 className="font-serif text-base md:text-lg italic text-foreground">{a.title}</h3>
