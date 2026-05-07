@@ -14,30 +14,11 @@ import { Social } from "@/components/site/Social";
 import { artworks as staticArtworks } from "@/data/artworks";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/i18n/ThemeContext";
-import type { CmsArtwork } from "@/lib/cms-types";
-import { cmsArtworkToSiteArtwork, staticArtworkToSiteArtwork, type SiteArtwork } from "@/lib/site-artworks";
+import { staticArtworkToSiteArtwork, type SiteArtwork } from "@/lib/site-artworks";
 
 export const Route = createFileRoute("/home")({
   loader: async () => {
     const fallback = staticArtworks.map(staticArtworkToSiteArtwork);
-
-    if (typeof process !== "undefined" && process.env.DATABASE_URL) {
-      try {
-        const { serializeArtwork } = await import("@/lib/cms-server");
-        const { prisma } = await import("@/lib/prisma");
-        const artworks = await prisma.artwork.findMany({
-          where: { status: "PUBLISHED" },
-          include: { images: { orderBy: { order: "asc" } }, series: true },
-          orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
-        });
-
-        const siteArtworks = artworks.map((artwork) => cmsArtworkToSiteArtwork(serializeArtwork(artwork) as CmsArtwork));
-        if (siteArtworks.length > 0) return { artworks: siteArtworks };
-      } catch {
-        // Fall back to bundled portfolio data when CMS is not configured locally.
-      }
-    }
-
     return { artworks: fallback };
   },
   head: () => ({
@@ -60,7 +41,9 @@ function HomePage() {
   const [selected, setSelected] = useState<SiteArtwork | null>(null);
   const featured = artworks.filter((artwork) => artwork.isFeatured).slice(0, 3);
   const heroArtwork = featured[0] ?? artworks[0];
-  const shopItems = artworks.filter((artwork) => artwork.available && artwork.showPrice && typeof artwork.price === "number");
+  const shopItems = artworks.filter(
+    (artwork) => artwork.available && artwork.showPrice && typeof artwork.price === "number",
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;

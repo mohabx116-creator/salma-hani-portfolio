@@ -1,6 +1,4 @@
-import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
-import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "salma_admin_session";
 const encoder = new TextEncoder();
@@ -18,17 +16,11 @@ export type AdminSession = {
   role: "ADMIN" | "VIEWER";
 };
 
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 12);
-}
-
-export async function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
-}
-
 export function configuredAdminCredentials() {
   const allowDevFallback = process.env.NODE_ENV !== "production";
-  const email = (process.env.ADMIN_EMAIL || (allowDevFallback ? DEV_ADMIN_EMAIL : "")).toLowerCase().trim();
+  const email = (process.env.ADMIN_EMAIL || (allowDevFallback ? DEV_ADMIN_EMAIL : ""))
+    .toLowerCase()
+    .trim();
   const password = process.env.ADMIN_PASSWORD || (allowDevFallback ? DEV_ADMIN_PASSWORD : "");
   const name = process.env.ADMIN_NAME?.trim() || "Salma Hani";
 
@@ -36,49 +28,11 @@ export function configuredAdminCredentials() {
   return { email, password, name };
 }
 
-export function databaseConfigError() {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
-
-  if (!databaseUrl) return "DATABASE_URL is not set.";
-  if (
-    databaseUrl.includes("USER:PASSWORD@HOST") ||
-    databaseUrl.includes("@HOST:") ||
-    databaseUrl.includes("//USER:")
-  ) {
-    return "DATABASE_URL is still using the placeholder value.";
-  }
-
-  return null;
-}
-
-export async function syncConfiguredAdmin(password: string) {
-  const configured = configuredAdminCredentials();
-  if (!configured) return null;
-
-  const passwordHash = await hashPassword(password);
-
-  return prisma.user.upsert({
-    where: { email: configured.email },
-    update: {
-      name: configured.name,
-      passwordHash,
-      role: "ADMIN",
-    },
-    create: {
-      email: configured.email,
-      name: configured.name,
-      passwordHash,
-      role: "ADMIN",
-    },
-  });
-}
-
 export async function authenticateAdmin(email: string, password: string) {
   const configured = configuredAdminCredentials();
   const matchesConfiguredAdmin = configured?.email === email && configured.password === password;
 
-  if (matchesConfiguredAdmin && databaseConfigError()) {
-    console.warn(`[auth] Signing in configured admin without database: ${email}`);
+  if (matchesConfiguredAdmin) {
     return {
       id: "configured-admin",
       email: configured.email,
@@ -89,16 +43,6 @@ export async function authenticateAdmin(email: string, password: string) {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-  }
-
-  const user = await findAdminByEmail(email);
-  if (user?.role === "ADMIN" && (await verifyPassword(password, user.passwordHash))) {
-    return user;
-  }
-
-  if (matchesConfiguredAdmin) {
-    console.warn(`[auth] Syncing configured admin user: ${email}`);
-    return syncConfiguredAdmin(password);
   }
 
   return null;
@@ -154,10 +98,6 @@ export function sessionCookie(token: string) {
 
 export function clearSessionCookie() {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-}
-
-export async function findAdminByEmail(email: string) {
-  return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 }
 
 export function json(data: unknown, status = 200, headers?: HeadersInit) {

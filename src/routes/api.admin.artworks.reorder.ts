@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAdmin, json } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { reorderArtworks } from "@/lib/static-cms";
 
 export const Route = createFileRoute("/api/admin/artworks/reorder")({
   server: {
@@ -11,11 +11,7 @@ export const Route = createFileRoute("/api/admin/artworks/reorder")({
 
         const body = (await request.json().catch(() => null)) as { ids?: string[] } | null;
         const ids = body?.ids ?? [];
-        await prisma.$transaction(
-          ids.map((id, displayOrder) =>
-            prisma.artwork.update({ where: { id }, data: { displayOrder } }),
-          ),
-        );
+        reorderArtworks(ids);
 
         return json({ ok: true });
       },

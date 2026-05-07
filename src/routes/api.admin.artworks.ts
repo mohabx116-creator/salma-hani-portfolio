@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAdmin, json } from "@/lib/auth";
-import { pickArtworkPayload, serializeArtwork } from "@/lib/cms-server";
-import { prisma } from "@/lib/prisma";
+import { pickArtworkPayload } from "@/lib/cms-server";
+import type { Availability, ContentStatus } from "@/lib/cms-types";
+import { createArtwork, listArtworks } from "@/lib/static-cms";
 import { slugify } from "@/lib/slug";
 
 export const Route = createFileRoute("/api/admin/artworks")({
@@ -15,16 +16,7 @@ export const Route = createFileRoute("/api/admin/artworks")({
         const availability = url.searchParams.get("availability");
         const seriesId = url.searchParams.get("seriesId");
 
-        const artworks = await prisma.artwork.findMany({
-          where: {
-            availability: (availability || undefined) as never,
-            seriesId: seriesId || undefined,
-          },
-          include: { images: { orderBy: { order: "asc" } }, series: true },
-          orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
-        });
-
-        return json({ artworks: artworks.map(serializeArtwork) });
+        return json({ artworks: listArtworks({ availability, seriesId }) });
       },
       POST: async ({ request }) => {
         const guard = await requireAdmin(request);
@@ -39,27 +31,24 @@ export const Route = createFileRoute("/api/admin/artworks")({
         }
 
         const images = Array.isArray(body.images) ? body.images : [];
-        const artwork = await prisma.artwork.create({
-          data: {
-            ...payload,
-            availability: payload.availability as never,
-            slug: payload.slug || slugify(payload.title),
-            images: {
-                create: images.map((image, index) => {
-                  const item = image as Record<string, unknown>;
-                  return {
-                    url: String(item.url ?? ""),
-                    altText: String(item.altText ?? payload.title),
-                    caption: String(item.caption ?? ""),
-                    order: Number(item.order ?? index),
-                  };
-                }),
-            },
-          },
-          include: { images: { orderBy: { order: "asc" } }, series: true },
+        const artwork = createArtwork({
+          ...payload,
+          availability: payload.availability as Availability,
+          status: payload.status as ContentStatus,
+          slug: payload.slug || slugify(payload.title),
+          images: images.map((image, index) => {
+            const item = image as Record<string, unknown>;
+            return {
+              id: String(item.id ?? `image-${Date.now()}-${index}`),
+              url: String(item.url ?? ""),
+              altText: String(item.altText ?? payload.title),
+              caption: String(item.caption ?? ""),
+              order: Number(item.order ?? index),
+            };
+          }),
         });
 
-        return json({ artwork: serializeArtwork(artwork) }, 201);
+        return json({ artwork }, 201);
       },
     },
   },

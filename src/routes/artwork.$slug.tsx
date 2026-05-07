@@ -10,22 +10,6 @@ import type { CmsArtwork } from "@/lib/cms-types";
 
 export const Route = createFileRoute("/artwork/$slug")({
   loader: async ({ params }) => {
-    if (typeof process !== "undefined" && process.env.DATABASE_URL) {
-      try {
-        const { prisma } = await import("@/lib/prisma");
-        const dbArtwork = await prisma.artwork.findUnique({
-          where: { slug: params.slug },
-          include: { images: { orderBy: { order: "asc" } }, series: true },
-        });
-        if (dbArtwork) {
-          const { serializeArtwork } = await import("@/lib/cms-server");
-          return { artwork: serializeArtwork(dbArtwork) as CmsArtwork };
-        }
-      } catch {
-        // Fall back to bundled portfolio data when CMS is not configured locally.
-      }
-    }
-
     const local = artworks.find((item) => item.id === params.slug);
     if (!local) throw new Error("Artwork not found");
     return {
@@ -40,7 +24,15 @@ export const Route = createFileRoute("/artwork/$slug")({
         statement: null,
         mainImage: local.image,
         mainImageAlt: local.title,
-        images: [{ id: local.id, url: local.image, alt: local.title, caption: local.description, order: 0 }],
+        images: [
+          {
+            id: local.id,
+            url: local.image,
+            alt: local.title,
+            caption: local.description,
+            order: 0,
+          },
+        ],
         series: null,
         availability: local.available ? "AVAILABLE" : "NOT_FOR_SALE",
         price: local.price ?? null,
@@ -72,7 +64,15 @@ function ArtworkDetail() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = artwork.images.length
     ? artwork.images
-    : [{ id: artwork.id, url: artwork.mainImage, alt: artwork.title, caption: artwork.description, order: 0 }];
+    : [
+        {
+          id: artwork.id,
+          url: artwork.mainImage,
+          alt: artwork.title,
+          caption: artwork.description,
+          order: 0,
+        },
+      ];
 
   return (
     <ThemeProvider>
@@ -82,27 +82,40 @@ function ArtworkDetail() {
           <main className="px-[5vw] pb-24 pt-28 md:pt-36">
             <div className="mx-auto max-w-[1500px]">
               <nav className="mb-10 text-xs uppercase tracking-[0.24em] text-ink-soft">
-                <a href="/#works" className="hover:text-gold">Works</a>
+                <a href="/#works" className="hover:text-gold">
+                  Works
+                </a>
                 <span className="mx-3">/</span>
                 <span>{artwork.title}</span>
               </nav>
 
               <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
                 <button className="bg-bone p-3 shadow-frame" onClick={() => setLightboxIndex(0)}>
-                  <img src={artwork.mainImage} alt={artwork.mainImageAlt ?? artwork.title} className="max-h-[78vh] w-full object-contain" />
+                  <img
+                    src={artwork.mainImage}
+                    alt={artwork.mainImageAlt ?? artwork.title}
+                    className="max-h-[78vh] w-full object-contain"
+                  />
                 </button>
 
                 <aside className="lg:sticky lg:top-28 lg:self-start">
                   <p className="eyebrow">{artwork.series?.name ?? artwork.medium}</p>
                   <h1 className="mt-5 font-serif text-5xl italic md:text-6xl">{artwork.title}</h1>
-                  {artwork.description && <p className="mt-8 leading-8 text-ink-soft">{artwork.description}</p>}
+                  {artwork.description && (
+                    <p className="mt-8 leading-8 text-ink-soft">{artwork.description}</p>
+                  )}
 
                   <dl className="mt-10 space-y-4 text-sm">
                     <Meta label="Year" value={artwork.year?.toString()} />
                     <Meta label="Medium" value={artwork.medium} />
                     <Meta label="Dimensions" value={artwork.dimensions ?? undefined} />
-                    <Meta label="Availability" value={artwork.availability.replaceAll("_", " ").toLowerCase()} />
-                    {artwork.showPrice && artwork.price && <Meta label="Price" value={`${artwork.price}`} />}
+                    <Meta
+                      label="Availability"
+                      value={artwork.availability.replaceAll("_", " ").toLowerCase()}
+                    />
+                    {artwork.showPrice && artwork.price && (
+                      <Meta label="Price" value={`${artwork.price}`} />
+                    )}
                   </dl>
 
                   <a
@@ -118,9 +131,19 @@ function ArtworkDetail() {
                 <h2 className="font-serif text-3xl">Inner gallery</h2>
                 <div className="mt-6 flex gap-4 overflow-x-auto pb-4">
                   {images.map((image, index) => (
-                    <button key={image.id} className="w-56 shrink-0 text-start" onClick={() => setLightboxIndex(index)}>
-                      <img src={image.url} alt={image.alt ?? artwork.title} className="aspect-[4/5] w-full object-cover" />
-                      {image.caption && <p className="mt-3 text-sm leading-6 text-ink-soft">{image.caption}</p>}
+                    <button
+                      key={image.id}
+                      className="w-56 shrink-0 text-start"
+                      onClick={() => setLightboxIndex(index)}
+                    >
+                      <img
+                        src={image.url}
+                        alt={image.alt ?? artwork.title}
+                        className="aspect-[4/5] w-full object-cover"
+                      />
+                      {image.caption && (
+                        <p className="mt-3 text-sm leading-6 text-ink-soft">{image.caption}</p>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -129,7 +152,11 @@ function ArtworkDetail() {
           </main>
           <Footer />
           {lightboxIndex !== null && (
-            <ArtworkLightbox images={images} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            <ArtworkLightbox
+              images={images}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxIndex(null)}
+            />
           )}
         </div>
       </LanguageProvider>

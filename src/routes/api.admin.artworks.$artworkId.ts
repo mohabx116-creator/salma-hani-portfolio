@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAdmin, json } from "@/lib/auth";
-import { pickArtworkPayload, serializeArtwork } from "@/lib/cms-server";
-import { prisma } from "@/lib/prisma";
+import { pickArtworkPayload } from "@/lib/cms-server";
+import type { Availability, ContentStatus } from "@/lib/cms-types";
+import { deleteArtwork, findArtworkById, updateArtwork } from "@/lib/static-cms";
 import { slugify } from "@/lib/slug";
 
 export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
@@ -11,13 +12,9 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        const artwork = await prisma.artwork.findUnique({
-          where: { id: params.artworkId },
-          include: { images: { orderBy: { order: "asc" } }, series: true },
-        });
-
+        const artwork = findArtworkById(params.artworkId);
         if (!artwork) return json({ error: "Artwork not found" }, 404);
-        return json({ artwork: serializeArtwork(artwork) });
+        return json({ artwork });
       },
       PUT: async ({ request, params }) => {
         const guard = await requireAdmin(request);
@@ -32,37 +29,31 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
         }
 
         const images = Array.isArray(body.images) ? body.images : [];
-        const artwork = await prisma.$transaction(async (tx) => {
-          await tx.artworkImage.deleteMany({ where: { artworkId: params.artworkId } });
-          return tx.artwork.update({
-            where: { id: params.artworkId },
-            data: {
-              ...payload,
-              availability: payload.availability as never,
-              slug: payload.slug || slugify(payload.title),
-              images: {
-                create: images.map((image, index) => {
-                  const item = image as Record<string, unknown>;
-                  return {
-                    url: String(item.url ?? ""),
-                    altText: String(item.altText ?? payload.title),
-                    caption: String(item.caption ?? ""),
-                    order: Number(item.order ?? index),
-                  };
-                }),
-              },
-            },
-            include: { images: { orderBy: { order: "asc" } }, series: true },
-          });
+        const artwork = updateArtwork(params.artworkId, {
+          ...payload,
+          availability: payload.availability as Availability,
+          status: payload.status as ContentStatus,
+          slug: payload.slug || slugify(payload.title),
+          images: images.map((image, index) => {
+            const item = image as Record<string, unknown>;
+            return {
+              id: String(item.id ?? `image-${Date.now()}-${index}`),
+              url: String(item.url ?? ""),
+              altText: String(item.altText ?? payload.title),
+              caption: String(item.caption ?? ""),
+              order: Number(item.order ?? index),
+            };
+          }),
         });
 
-        return json({ artwork: serializeArtwork(artwork) });
+        if (!artwork) return json({ error: "Artwork not found" }, 404);
+        return json({ artwork });
       },
       DELETE: async ({ request, params }) => {
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        await prisma.artwork.delete({ where: { id: params.artworkId } });
+        deleteArtwork(params.artworkId);
         return json({ ok: true });
       },
     },

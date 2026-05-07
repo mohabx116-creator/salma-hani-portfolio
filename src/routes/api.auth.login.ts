@@ -6,7 +6,9 @@ export const Route = createFileRoute("/api/auth/login")({
     handlers: {
       POST: async ({ request }) => {
         const body = await request.json().catch(() => null);
-        const email = String(body?.email ?? "").toLowerCase().trim();
+        const email = String(body?.email ?? "")
+          .toLowerCase()
+          .trim();
         const password = String(body?.password ?? "");
 
         if (!email || !password) {
@@ -18,7 +20,7 @@ export const Route = createFileRoute("/api/auth/login")({
           user = await authenticateAdmin(email, password);
         } catch (error) {
           console.error("[auth] Login failed", error);
-          return json({ error: "Authentication database is unavailable. Check DATABASE_URL." }, 500);
+          return json({ error: "Sign in failed." }, 500);
         }
         if (!user) return json({ error: "Invalid credentials" }, 401);
 

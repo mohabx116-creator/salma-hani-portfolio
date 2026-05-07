@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { json } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createInquiry, findArtworkBySlug } from "@/lib/static-cms";
 
 export const Route = createFileRoute("/api/contact")({
   server: {
@@ -10,7 +10,9 @@ export const Route = createFileRoute("/api/contact")({
         if (body?.company) return json({ ok: true });
 
         const name = String(body?.name ?? "").trim();
-        const email = String(body?.email ?? "").toLowerCase().trim();
+        const email = String(body?.email ?? "")
+          .toLowerCase()
+          .trim();
         const interest = String(body?.interest ?? "General").trim();
         const message = String(body?.message ?? "").trim();
         const artworkSlug = String(body?.artworkSlug ?? "").trim() || null;
@@ -19,18 +21,14 @@ export const Route = createFileRoute("/api/contact")({
           return json({ error: "Name, email, and message are required" }, 400);
         }
 
-        const artwork = artworkSlug
-          ? await prisma.artwork.findUnique({ where: { slug: artworkSlug } }).catch(() => null)
-          : null;
-
-        const inquiry = await prisma.inquiry.create({
-          data: {
-            name,
-            email,
-            interest,
-            message,
-            artworkId: artwork?.id,
-          },
+        const artwork = artworkSlug ? findArtworkBySlug(artworkSlug) : null;
+        const inquiry = createInquiry({
+          name,
+          email,
+          interest,
+          message,
+          artworkId: artwork?.id,
+          artworkSlug,
         });
 
         return json({ ok: true, inquiryId: inquiry.id }, 201);

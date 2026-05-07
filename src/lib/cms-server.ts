@@ -1,16 +1,23 @@
-import type { Artwork, ArtworkImage, Series } from "@prisma/client";
-
-type ArtworkWithRelations = Artwork & {
-  images?: ArtworkImage[];
-  series?: Series | null;
+type ArtworkWithRelations = {
+  price?: { toString: () => string } | string | number | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  images?: Array<{ order: number }>;
+  series?: unknown;
+  [key: string]: unknown;
 };
 
 export function serializeArtwork(artwork: ArtworkWithRelations) {
+  const createdAt =
+    artwork.createdAt instanceof Date ? artwork.createdAt.toISOString() : artwork.createdAt;
+  const updatedAt =
+    artwork.updatedAt instanceof Date ? artwork.updatedAt.toISOString() : artwork.updatedAt;
+
   return {
     ...artwork,
     price: artwork.price ? artwork.price.toString() : null,
-    createdAt: artwork.createdAt.toISOString(),
-    updatedAt: artwork.updatedAt.toISOString(),
+    createdAt,
+    updatedAt,
     images: [...(artwork.images ?? [])].sort((a, b) => a.order - b.order),
     series: artwork.series ?? null,
   };
