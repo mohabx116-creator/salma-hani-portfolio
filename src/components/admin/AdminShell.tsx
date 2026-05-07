@@ -1,5 +1,5 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Image, Inbox, LogOut, Palette, Settings } from "lucide-react";
+import { BarChart3, Image, Inbox, LogOut, Palette, Settings, Users, CalendarDays, Newspaper, FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const nav = [
@@ -7,6 +7,10 @@ const nav = [
   { to: "/admin/artworks", label: "Artworks", icon: Image },
   { to: "/admin/series", label: "Series", icon: Palette },
   { to: "/admin/inquiries", label: "Inquiries", icon: Inbox },
+  { to: "/admin/subscribers", label: "Subscribers", icon: Users },
+  { to: "/admin/exhibitions", label: "Exhibitions", icon: CalendarDays },
+  { to: "/admin/press", label: "Press", icon: Newspaper },
+  { to: "/admin/media", label: "Media Library", icon: FolderOpen },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

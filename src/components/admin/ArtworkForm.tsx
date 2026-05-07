@@ -3,6 +3,8 @@ import { Plus, Save, Trash2, Upload } from "lucide-react";
 import type { Availability, CmsArtwork, CmsArtworkImage, CmsSeries } from "@/lib/cms-types";
 import { AVAILABILITY_LABELS, MEDIUM_OPTIONS } from "@/lib/cms-types";
 import { slugify } from "@/lib/slug";
+import { InnerGalleryManager } from "./inner-gallery-manager";
+import { RichTextEditor } from "./rich-text-editor";
 
 type ArtworkDraft = Omit<CmsArtwork, "id" | "createdAt" | "updatedAt" | "series"> & {
   id?: string;
@@ -28,6 +30,8 @@ const emptyArtwork: ArtworkDraft = {
   metaTitle: "",
   metaDesc: "",
   ogImage: "",
+  currency: "USD",
+  status: "PUBLISHED",
 };
 
 export function ArtworkForm({ artwork }: { artwork?: CmsArtwork }) {
@@ -140,8 +144,12 @@ export function ArtworkForm({ artwork }: { artwork?: CmsArtwork }) {
             </label>
           </div>
           <label>
-            <span className="admin-label">Artwork statement</span>
-            <textarea rows={7} value={draft.description ?? ""} onChange={(event) => update("description", event.target.value)} className="admin-input resize-y" />
+            <span className="admin-label flex mb-2">Artwork statement</span>
+            <RichTextEditor 
+              value={draft.description ?? ""} 
+              onChange={(value) => update("description", value)}
+              placeholder="Write about this piece — inspiration, process, meaning..."
+            />
           </label>
           <label>
             <span className="admin-label">SEO description</span>
@@ -163,9 +171,28 @@ export function ArtworkForm({ artwork }: { artwork?: CmsArtwork }) {
               {Object.entries(AVAILABILITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
-          <TextField label="Private price" value={draft.price ?? ""} type="number" onChange={(value) => update("price", value)} />
+          <label>
+            <span className="admin-label flex justify-between">
+              Private price
+              <select value={draft.currency ?? "USD"} onChange={(e) => update("currency", e.target.value)} className="bg-transparent text-xs outline-none">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="EGP">EGP</option>
+              </select>
+            </span>
+            <input required={false} type="number" value={draft.price ?? ""} onChange={(event) => update("price", event.target.value)} className="admin-input" />
+          </label>
           <Toggle label="Show price publicly" checked={draft.showPrice} onChange={(value) => update("showPrice", value)} />
           <Toggle label="Featured on homepage" checked={draft.isFeatured} onChange={(value) => update("isFeatured", value)} />
+          <label>
+            <span className="admin-label">Status</span>
+            <select value={draft.status ?? "PUBLISHED"} onChange={(event) => update("status", event.target.value)} className="admin-input">
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+          </label>
         </aside>
       </div>
 
@@ -178,41 +205,10 @@ export function ArtworkForm({ artwork }: { artwork?: CmsArtwork }) {
       </section>
 
       <section>
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="font-serif text-2xl">Inner gallery captions</h2>
-          <label className="cinematic-button inline-flex cursor-pointer items-center gap-2 px-4 py-3 text-[10px] uppercase tracking-[0.22em]">
-            <Plus className="size-4" />
-            Add images
-            <input hidden type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={(event) => void onGalleryUpload(event.target.files)} />
-          </label>
-        </div>
-        <div className="mt-5 grid gap-4">
-          {draft.images.map((image, index) => (
-            <GalleryRow
-              key={image.id}
-              image={image}
-              index={index}
-              onCaption={(caption) => {
-                const next = [...draft.images];
-                next[index] = { ...image, caption };
-                update("images", next);
-              }}
-              onDelete={() => update("images", draft.images.filter((_, i) => i !== index))}
-              onMove={(direction) => {
-                const next = [...draft.images];
-                const target = index + direction;
-                if (target < 0 || target >= next.length) return;
-                const currentItem = next[index];
-                const targetItem = next[target];
-                if (!currentItem || !targetItem) return;
-                next[index] = targetItem;
-                next[target] = currentItem;
-                update("images", next);
-              }}
-            />
-          ))}
-          {draft.images.length === 0 && <p className="border border-dashed border-border p-6 text-sm text-ink-soft">No inner gallery images yet.</p>}
-        </div>
+        <InnerGalleryManager 
+          images={draft.images} 
+          onChange={(images) => update("images", images)} 
+        />
       </section>
 
       <div className="sticky bottom-0 flex items-center justify-between border-t border-border bg-background/95 py-4 backdrop-blur">

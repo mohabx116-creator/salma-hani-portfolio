@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,107 +8,237 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── AUTH & USERS ───
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String?
-  passwordHash String
+  password     String   // bcrypt hashed — NEVER plaintext
   role         Role     @default(ADMIN)
+  lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum Role {
   ADMIN
-  VIEWER
+  // VIEWER reserved for future guest curator access
 }
 
+// ─── ARTWORKS (CORE ENTITY) ───
 model Artwork {
   id             String       @id @default(cuid())
   title          String
   slug           String       @unique
   year           Int?
-  medium         String
-  dimensions     String?
-  description    String?      @db.Text
-  statement      String?      @db.Text
-  mainImage      String
-  mainImageAlt   String?
+  medium         String       // e.g., "Oil on linen"
+  dimensions     String?      // e.g., "120 × 90 cm"
+  description    String?      @db.Text // Artist's statement for this piece
+  mainImage      String       // Cloudinary URL with transformations
+  mainImagePublicId String?   // For Cloudinary management
+  
+  // Inner gallery — THE CRITICAL FEATURE
   images         ArtworkImage[]
+
+  // Categorization
   series         Series?      @relation(fields: [seriesId], references: [id])
   seriesId       String?
+
+  // Commercial
   availability   Availability @default(AVAILABLE)
-  price          Decimal?     @db.Decimal(10, 2)
+  price          Decimal?     @db.Decimal(12, 2)
   showPrice      Boolean      @default(false)
+  currency       String       @default("USD")
+
+  // Display control
   isFeatured     Boolean      @default(false)
   displayOrder   Int          @default(0)
+  status         ContentStatus @default(PUBLISHED)
+
+  // SEO
   metaTitle      String?
   metaDesc       String?
-  ogImage        String?
+  ogImage        String?      // Override OG image
+
+  // Analytics
+  viewCount      Int          @default(0)
+  inquiryCount   Int          @default(0)
+
+  // Timestamps
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  publishedAt    DateTime?
+
+  // Relations
+  inquiries      Inquiry[]
+}
+
+model ArtworkImage {
+  id             String       @id @default(cuid())
+  url            String       // Cloudinary URL
+  publicId       String?      // Cloudinary public_id
+  caption        String?      @db.Text // INDIVIDUAL CAPTION — editable by Salma
+  altText        String?      // Accessibility
+  order          Int          @default(0) // Display order in inner gallery
+  width          Int?         // Original dimensions
+  height         Int?
+  fileSize       Int?         // Bytes
+  
+  artworkId      String
+  artwork        Artwork      @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime     @default(now())
+  
+  @@index([artworkId, order])
+}
+
+// ─── SERIES/COLLECTIONS ───
+model Series {
+  id             String       @id @default(cuid())
+  name           String       @unique
+  slug           String       @unique
+  description    String?      @db.Text
+  coverImage     String?      // Cloudinary URL
+  displayOrder   Int          @default(0)
+  isVisible      Boolean      @default(true)
+  artworks       Artwork[]
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }
 
-model ArtworkImage {
-  id        String  @id @default(cuid())
-  url       String
-  alt       String?
-  caption   String?
-  order     Int     @default(0)
-  artworkId String
-  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
-}
-
-model Series {
-  id           String    @id @default(cuid())
-  name         String    @unique
-  slug         String    @unique
-  description  String?   @db.Text
-  displayOrder Int       @default(0)
-  artworks     Artwork[]
-}
-
-model Inquiry {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  interest  String
-  artworkId String?
-  artworkSlug String?
-  message   String   @db.Text
-  read      Boolean  @default(false)
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model Subscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-}
-
-model SiteSetting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String   @db.Text
-  updatedAt DateTime @updatedAt
-}
-
+// ─── EXHIBITIONS (PROFESSIONAL CREDIBILITY) ───
 model Exhibition {
-  id           String   @id @default(cuid())
-  title        String
-  venue        String
-  city         String?
-  startDate    DateTime?
-  endDate      DateTime?
-  link         String?
-  isUpcoming   Boolean  @default(false)
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
+  id             String       @id @default(cuid())
+  title          String
+  venue          String
+  city           String?
+  country        String?
+  startDate      DateTime
+  endDate        DateTime?
+  description    String?      @db.Text
+  link           String?
+  isUpcoming     Boolean      @default(false)
+  isSolo         Boolean      @default(false) // Solo vs Group show
+  displayOrder   Int          @default(0)
+  status         ContentStatus @default(PUBLISHED)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
+// ─── INQUIRIES (CONTACT FORM + ACQUISITION) ───
+model Inquiry {
+  id             String       @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  interest       InterestType @default(GENERAL)
+  
+  // If about specific artwork
+  artworkId      String?
+  artwork        Artwork?     @relation(fields: [artworkId], references: [id])
+  
+  message        String       @db.Text
+  budget         String?      // e.g., "$2,000 - $5,000"
+  timeline       String?      // e.g., "Within 3 months"
+  
+  // Admin tracking
+  read           Boolean      @default(false)
+  starred        Boolean      @default(false)
+  status         InquiryStatus @default(NEW)
+  notes          String?      @db.Text // Internal admin notes
+  
+  // Spam protection
+  ipAddress      String?
+  userAgent      String?
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+// ─── NEWSLETTER ───
+model Subscriber {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  name           String?
+  source         String?      // e.g., "homepage", "artwork_page"
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+}
+
+// ─── SITE SETTINGS (KEY-VALUE STORE) ───
+model SiteSetting {
+  id             String       @id @default(cuid())
+  key            String       @unique
+  value          String       @db.Text
+  type           SettingType  @default(STRING)
+  updatedAt      DateTime     @updatedAt
+  updatedBy      String?      // User ID
+}
+
+// ─── PRESS/FEATURES ───
+model PressFeature {
+  id             String       @id @default(cuid())
+  title          String
+  publication    String
+  date           DateTime
+  link           String?
+  quote          String?      @db.Text
+  isVisible      Boolean      @default(true)
+  displayOrder   Int          @default(0)
+  createdAt      DateTime     @default(now())
+}
+
+// ─── PAGE VIEWS (ANALYTICS) ───
+model PageView {
+  id             String       @id @default(cuid())
+  path           String
+  artworkId      String?
+  referrer       String?
+  country        String?
+  device         String?      // mobile | tablet | desktop
+  createdAt      DateTime     @default(now())
+  
+  @@index([path, createdAt])
+  @@index([artworkId, createdAt])
+}
+
+// ─── ENUMS ───
 enum Availability {
   AVAILABLE
   SOLD
   COMMISSION
   NOT_FOR_SALE
+  RESERVED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum InterestType {
+  GENERAL
+  ACQUISITION
+  COMMISSION
+  EXHIBITION
+  PRESS
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  RESPONDED
+  CLOSED
+  SPAM
+}
+
+enum SettingType {
+  STRING
+  TEXT
+  JSON
+  BOOLEAN
+  NUMBER
 }
