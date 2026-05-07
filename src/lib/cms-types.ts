@@ -1,9 +1,10 @@
-export type Availability = "AVAILABLE" | "SOLD" | "COMMISSION" | "NOT_FOR_SALE";
+export type Availability = "AVAILABLE" | "SOLD" | "COMMISSION" | "NOT_FOR_SALE" | "RESERVED";
+export type ContentStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type CmsArtworkImage = {
   id: string;
   url: string;
-  alt?: string | null;
+  altText?: string | null;
   caption?: string | null;
   order: number;
 };
@@ -24,17 +25,17 @@ export type CmsArtwork = {
   medium: string;
   dimensions?: string | null;
   description?: string | null;
-  statement?: string | null;
   mainImage: string;
-  mainImageAlt?: string | null;
   images: CmsArtworkImage[];
   series?: CmsSeries | null;
   seriesId?: string | null;
   availability: Availability;
   price?: string | number | null;
+  currency?: string | null;
   showPrice: boolean;
   isFeatured: boolean;
   displayOrder: number;
+  status?: ContentStatus;
   metaTitle?: string | null;
   metaDesc?: string | null;
   ogImage?: string | null;
@@ -51,7 +52,7 @@ export type Inquiry = {
   artworkSlug?: string | null;
   message: string;
   read: boolean;
-  archived: boolean;
+  status: string;
   createdAt: string;
 };
 

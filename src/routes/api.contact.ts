@@ -30,7 +30,6 @@ export const Route = createFileRoute("/api/contact")({
             interest,
             message,
             artworkId: artwork?.id,
-            artworkSlug,
           },
         });
 

@@ -45,15 +45,15 @@ export const Route = createFileRoute("/api/admin/artworks")({
             availability: payload.availability as never,
             slug: payload.slug || slugify(payload.title),
             images: {
-              create: images.map((image, index) => {
-                const item = image as Record<string, unknown>;
-                return {
-                  url: String(item.url ?? ""),
-                  alt: String(item.alt ?? payload.title),
-                  caption: String(item.caption ?? ""),
-                  order: Number(item.order ?? index),
-                };
-              }),
+                create: images.map((image, index) => {
+                  const item = image as Record<string, unknown>;
+                  return {
+                    url: String(item.url ?? ""),
+                    altText: String(item.altText ?? payload.title),
+                    caption: String(item.caption ?? ""),
+                    order: Number(item.order ?? index),
+                  };
+                }),
             },
           },
           include: { images: { orderBy: { order: "asc" } }, series: true },

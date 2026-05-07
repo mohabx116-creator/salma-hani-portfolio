@@ -1,15 +1,15 @@
 import { useLang } from "@/i18n/LanguageContext";
-import { heroArtwork } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-export function Hero() {
+export function Hero({ artwork }: { artwork: SiteArtwork }) {
   const { t } = useLang();
 
   return (
     <section id="top" className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 md:px-12 grain">
       <div className="absolute inset-0 z-0 hero-overlay">
         <img
-          src={heroArtwork.image}
-          alt={heroArtwork.title}
+          src={artwork.image}
+          alt={artwork.title}
           className="parallax-img h-full w-full object-cover opacity-75 blur-[1px] saturate-[0.85] contrast-125 will-change-transform dark:opacity-55"
           width={1600}
           height={1200}

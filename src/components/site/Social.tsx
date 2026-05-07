@@ -1,9 +1,9 @@
 import { useLang } from "@/i18n/LanguageContext";
-import { artworks } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-export function Social() {
+export function Social({ items }: { items: SiteArtwork[] }) {
   const { t } = useLang();
-  const tiles = artworks.slice(0, 6);
+  const tiles = items.slice(0, 6);
   return (
     <section className="py-32 md:py-40 px-[5vw] cinematic-band section-depth">
       <div className="mx-auto max-w-[1500px]">

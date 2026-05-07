@@ -1,16 +1,15 @@
 import { useLang } from "@/i18n/LanguageContext";
-import { availableArtworks, type Artwork } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-const fmt = (lang: string, eur: number) =>
+const fmt = (lang: string, amount: number, currency: string) =>
   new Intl.NumberFormat(lang === "ar" ? "ar" : lang, {
     style: "currency",
-    currency: "EUR",
+    currency,
     maximumFractionDigits: 0,
-  }).format(eur);
+  }).format(amount);
 
-export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
+export function Shop({ items, onSelect }: { items: SiteArtwork[]; onSelect: (a: SiteArtwork) => void }) {
   const { t, lang } = useLang();
-  const items = availableArtworks();
 
   if (items.length === 0) {
     return (
@@ -60,7 +59,7 @@ export function Shop({ onSelect }: { onSelect: (a: Artwork) => void }) {
                     {a.category}{a.year ? ` · ${a.year}` : ""}
                   </p>
                 </div>
-                <p className="font-serif text-lg text-foreground tabular-nums">{fmt(lang, a.price!)}</p>
+                <p className="font-serif text-lg text-foreground tabular-nums">{fmt(lang, a.price!, a.currency ?? "USD")}</p>
               </div>
               <button
                 type="button"

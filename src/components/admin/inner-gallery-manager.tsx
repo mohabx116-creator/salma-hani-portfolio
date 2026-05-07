@@ -70,7 +70,7 @@ export function InnerGalleryManager({
       const newImages: CmsArtworkImage[] = uploaded.map((item, index) => ({
         id: `new-${Date.now()}-${index}`,
         url: item.url,
-        alt: "",
+        altText: "",
         caption: "",
         order: images.length + index,
       }))
@@ -184,7 +184,7 @@ function SortableImageCard({
       <div className="relative aspect-square">
         <img 
           src={image.url} 
-          alt={image.alt || `Gallery image ${index + 1}`} 
+          alt={image.altText || `Gallery image ${index + 1}`} 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">

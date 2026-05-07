@@ -1,9 +1,8 @@
 import { useLang } from "@/i18n/LanguageContext";
-import { featuredArtworks, type Artwork } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-export function Featured({ onSelect }: { onSelect: (a: Artwork) => void }) {
+export function Featured({ items, onSelect }: { items: SiteArtwork[]; onSelect: (a: SiteArtwork) => void }) {
   const { t } = useLang();
-  const items = featuredArtworks().slice(0, 3);
 
   return (
     <section className="py-32 md:py-48 px-[5vw]">

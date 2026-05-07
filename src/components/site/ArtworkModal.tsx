@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
-import type { Artwork } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; onClose: () => void }) {
+export function ArtworkModal({ artwork, onClose }: { artwork: SiteArtwork | null; onClose: () => void }) {
   const { t, lang } = useLang();
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
                 <div className="flex justify-between gap-6 border-b border-border pb-3">
                   <dt className="text-[10px] uppercase tracking-[0.3em] text-ink-soft">{t.shop.available}</dt>
                   <dd className="font-serif text-lg text-foreground tabular-nums">
-                    {new Intl.NumberFormat(lang === "ar" ? "ar" : lang, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(artwork.price)}
+                    {new Intl.NumberFormat(lang === "ar" ? "ar" : lang, { style: "currency", currency: artwork.currency ?? "USD", maximumFractionDigits: 0 }).format(artwork.price)}
                   </dd>
                 </div>
               )}
@@ -72,7 +72,7 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
           </div>
           <div className="mt-12 flex flex-col gap-3">
             <a
-              href={`/artwork/${artwork.id}`}
+              href={`/artwork/${artwork.slug}`}
               className="cinematic-button inline-flex items-center justify-center px-8 py-4 text-[10px] uppercase tracking-[0.28em]"
             >
               View artwork page

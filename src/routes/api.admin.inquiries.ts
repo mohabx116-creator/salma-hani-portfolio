@@ -10,12 +10,14 @@ export const Route = createFileRoute("/api/admin/inquiries")({
         if (guard.response) return guard.response;
 
         const inquiries = await prisma.inquiry.findMany({
-          where: { archived: false },
+          where: { status: { not: "CLOSED" } },
+          include: { artwork: { select: { slug: true } } },
           orderBy: { createdAt: "desc" },
         });
         return json({
           inquiries: inquiries.map((inquiry) => ({
             ...inquiry,
+            artworkSlug: inquiry.artwork?.slug ?? null,
             createdAt: inquiry.createdAt.toISOString(),
           })),
         });
@@ -32,10 +34,16 @@ export const Route = createFileRoute("/api/admin/inquiries")({
           where: { id },
           data: {
             read: typeof body?.read === "boolean" ? body.read : undefined,
-            archived: typeof body?.archived === "boolean" ? body.archived : undefined,
+            status: body?.archived === true ? "CLOSED" : undefined,
           },
         });
-        return json({ inquiry: { ...inquiry, createdAt: inquiry.createdAt.toISOString() } });
+        return json({
+          inquiry: {
+            ...inquiry,
+            artworkSlug: null,
+            createdAt: inquiry.createdAt.toISOString(),
+          },
+        });
       },
     },
   },

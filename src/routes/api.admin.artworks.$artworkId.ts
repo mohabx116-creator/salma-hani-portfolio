@@ -45,7 +45,7 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
                   const item = image as Record<string, unknown>;
                   return {
                     url: String(item.url ?? ""),
-                    alt: String(item.alt ?? payload.title),
+                    altText: String(item.altText ?? payload.title),
                     caption: String(item.caption ?? ""),
                     order: Number(item.order ?? index),
                   };

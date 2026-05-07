@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
-import { artworks, type Artwork, type Category } from "@/data/artworks";
+import type { SiteArtwork } from "@/lib/site-artworks";
 
-const categories: (Category | "all")[] = ["all", "Portrait", "Conceptual", "Mixed Media", "Landscape", "Process", "Drawing"];
-
-export function Gallery({ onSelect }: { onSelect: (a: Artwork) => void }) {
+export function Gallery({ items, onSelect }: { items: SiteArtwork[]; onSelect: (a: SiteArtwork) => void }) {
   const { t } = useLang();
-  const [active, setActive] = useState<Category | "all">("all");
+  const categories = ["all", ...new Set(items.map((item) => item.category).filter(Boolean))];
+  const [active, setActive] = useState<string>("all");
 
-  const items = active === "all" ? artworks : artworks.filter((a) => a.category === active);
+  const filteredItems = active === "all" ? items : items.filter((a) => a.category === active);
 
   return (
     <section id="works" className="py-32 md:py-48 px-[5vw] cinematic-band section-depth">
@@ -36,7 +35,7 @@ export function Gallery({ onSelect }: { onSelect: (a: Artwork) => void }) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
-          {items.map((a, i) => (
+          {filteredItems.map((a, i) => (
             <button
               key={a.id}
               onClick={() => onSelect(a)}

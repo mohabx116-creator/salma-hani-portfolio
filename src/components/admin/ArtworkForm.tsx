@@ -17,9 +17,7 @@ const emptyArtwork: ArtworkDraft = {
   medium: MEDIUM_OPTIONS[0],
   dimensions: "",
   description: "",
-  statement: "",
   mainImage: "",
-  mainImageAlt: "",
   images: [],
   seriesId: "",
   availability: "AVAILABLE",
@@ -91,7 +89,7 @@ export function ArtworkForm({ artwork }: { artwork?: CmsArtwork }) {
         ...uploaded.map((item, index) => ({
           id: `new-${Date.now()}-${index}`,
           url: item.url,
-          alt: current.title,
+          altText: current.title,
           caption: "",
           order: current.images.length + index,
         })),
@@ -261,7 +259,7 @@ function ImagePreview({ src, alt }: { src?: string | null; alt: string }) {
 function GalleryRow({ image, index, onCaption, onDelete, onMove }: { image: CmsArtworkImage; index: number; onCaption: (caption: string) => void; onDelete: () => void; onMove: (direction: -1 | 1) => void }) {
   return (
     <div className="grid gap-4 border border-border p-3 md:grid-cols-[120px_1fr_auto]">
-      <img src={image.url} alt={image.alt ?? ""} className="h-28 w-full object-cover" />
+      <img src={image.url} alt={image.altText ?? ""} className="h-28 w-full object-cover" />
       <label>
         <span className="admin-label">Caption {index + 1}</span>
         <input value={image.caption ?? ""} onChange={(event) => onCaption(event.target.value)} className="admin-input" />
