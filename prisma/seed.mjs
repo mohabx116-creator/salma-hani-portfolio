@@ -14,7 +14,10 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: email.toLowerCase() },
-    update: {},
+    update: {
+      passwordHash: await bcrypt.hash(password, 12),
+      role: "ADMIN",
+    },
     create: {
       email: email.toLowerCase(),
       name: "Salma Hani",
