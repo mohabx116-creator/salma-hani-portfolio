@@ -1,17 +1,9 @@
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ArrowRight, Instagram, LockKeyhole, Mail, Palette } from "lucide-react";
 import { artworks as staticArtworks } from "@/data/artworks";
-import { readSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ request }) => {
-    const session = await readSession(request);
-    if (session?.role === "ADMIN") {
-      throw redirect({ to: "/admin" });
-    }
-    return null;
-  },
   head: () => ({
     meta: [
       { title: "Salma Hani | Entrance" },
