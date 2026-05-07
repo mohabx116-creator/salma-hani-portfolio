@@ -71,6 +71,12 @@ export function ArtworkModal({ artwork, onClose }: { artwork: Artwork | null; on
             </dl>
           </div>
           <div className="mt-12 flex flex-col gap-3">
+            <a
+              href={`/artwork/${artwork.id}`}
+              className="cinematic-button inline-flex items-center justify-center px-8 py-4 text-[10px] uppercase tracking-[0.28em]"
+            >
+              View artwork page
+            </a>
             {typeof artwork.price === "number" && (
               <a
                 href="#contact"

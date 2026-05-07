@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+model Artwork {
+  id             String       @id @default(cuid())
+  title          String
+  slug           String       @unique
+  year           Int?
+  medium         String
+  dimensions     String?
+  description    String?      @db.Text
+  statement      String?      @db.Text
+  mainImage      String
+  mainImageAlt   String?
+  images         ArtworkImage[]
+  series         Series?      @relation(fields: [seriesId], references: [id])
+  seriesId       String?
+  availability   Availability @default(AVAILABLE)
+  price          Decimal?     @db.Decimal(10, 2)
+  showPrice      Boolean      @default(false)
+  isFeatured     Boolean      @default(false)
+  displayOrder   Int          @default(0)
+  metaTitle      String?
+  metaDesc       String?
+  ogImage        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ArtworkImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  caption   String?
+  order     Int     @default(0)
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+}
+
+model Series {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  slug         String    @unique
+  description  String?   @db.Text
+  displayOrder Int       @default(0)
+  artworks     Artwork[]
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  interest  String
+  artworkId String?
+  artworkSlug String?
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model Exhibition {
+  id           String   @id @default(cuid())
+  title        String
+  venue        String
+  city         String?
+  startDate    DateTime?
+  endDate      DateTime?
+  link         String?
+  isUpcoming   Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+enum Availability {
+  AVAILABLE
+  SOLD
+  COMMISSION
+  NOT_FOR_SALE
+}
