@@ -86,12 +86,12 @@ export function configuredAdminCredentials() {
     if (isProduction) {
       console.error(
         "[auth] FATAL: ADMIN_EMAIL and/or ADMIN_PASSWORD are not set in environment variables. " +
-          "Go to Vercel → Project Settings → Environment Variables and add them without surrounding quotes.",
+        "Go to Vercel → Project Settings → Environment Variables and add them without surrounding quotes.",
       );
     } else {
       console.warn(
         "[auth] WARNING: ADMIN_EMAIL or ADMIN_PASSWORD missing from .env – login will fail. " +
-          "Copy .env.example to .env and fill in the values.",
+        "Copy .env.example to .env and fill in the values.",
       );
     }
     return null;
