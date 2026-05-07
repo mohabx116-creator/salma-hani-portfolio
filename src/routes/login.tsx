@@ -27,11 +27,14 @@ function AdminLogin() {
         body: JSON.stringify({ email, password }),
       })
 
-      if (!response.ok) throw new Error('Invalid credentials')
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(response.status === 401 ? 'Invalid email or password' : data?.error || 'Sign in failed')
+      }
 
       window.location.href = '/admin'
     } catch (err) {
-      setError('Invalid email or password')
+      setError(err instanceof Error ? err.message : 'Sign in failed')
     } finally {
       setLoading(false)
     }

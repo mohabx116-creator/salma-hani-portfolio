@@ -28,7 +28,8 @@ function AdminLogin() {
           });
           setLoading(false);
           if (!response.ok) {
-            setError("Invalid email or password.");
+            const data = await response.json().catch(() => null);
+            setError(response.status === 401 ? "Invalid email or password." : data?.error || "Sign in failed.");
             return;
           }
           window.location.href = "/admin";

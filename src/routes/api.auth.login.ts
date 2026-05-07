@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createSessionToken, findAdminByEmail, json, sessionCookie, verifyPassword } from "@/lib/auth";
+import { authenticateAdmin, createSessionToken, databaseConfigError, json, sessionCookie } from "@/lib/auth";
 
 export const Route = createFileRoute("/api/auth/login")({
   server: {
@@ -13,15 +13,17 @@ export const Route = createFileRoute("/api/auth/login")({
           return json({ error: "Email and password are required" }, 400);
         }
 
-        const user = await findAdminByEmail(email);
-        if (!user || user.role !== "ADMIN") {
-          return json({ error: "Invalid credentials" }, 401);
-        }
+        const databaseError = databaseConfigError();
+        if (databaseError) return json({ error: databaseError }, 500);
 
-        const ok = await verifyPassword(password, user.passwordHash);
-        if (!ok) {
-          return json({ error: "Invalid credentials" }, 401);
+        let user;
+        try {
+          user = await authenticateAdmin(email, password);
+        } catch (error) {
+          console.error("[auth] Login failed", error);
+          return json({ error: "Authentication database is unavailable. Check DATABASE_URL." }, 500);
         }
+        if (!user) return json({ error: "Invalid credentials" }, 401);
 
         const token = await createSessionToken({
           userId: user.id,

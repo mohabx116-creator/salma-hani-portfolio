@@ -24,6 +24,69 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
+export function configuredAdminCredentials() {
+  const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME?.trim() || "Salma Hani";
+
+  if (!email || !password) return null;
+  return { email, password, name };
+}
+
+export function databaseConfigError() {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+
+  if (!databaseUrl) return "DATABASE_URL is not set.";
+  if (
+    databaseUrl.includes("USER:PASSWORD@HOST") ||
+    databaseUrl.includes("@HOST:") ||
+    databaseUrl.includes("//USER:")
+  ) {
+    return "DATABASE_URL is still using the placeholder value.";
+  }
+
+  return null;
+}
+
+export async function syncConfiguredAdmin(password: string) {
+  const configured = configuredAdminCredentials();
+  if (!configured) return null;
+
+  const passwordHash = await hashPassword(password);
+
+  return prisma.user.upsert({
+    where: { email: configured.email },
+    update: {
+      name: configured.name,
+      passwordHash,
+      role: "ADMIN",
+    },
+    create: {
+      email: configured.email,
+      name: configured.name,
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+}
+
+export async function authenticateAdmin(email: string, password: string) {
+  const configured = configuredAdminCredentials();
+  const matchesConfiguredAdmin = configured?.email === email && configured.password === password;
+
+  const user = await findAdminByEmail(email);
+  if (user?.role === "ADMIN" && (await verifyPassword(password, user.passwordHash))) {
+    return user;
+  }
+
+  if (matchesConfiguredAdmin) {
+    console.warn(`[auth] Syncing configured admin user: ${email}`);
+    return syncConfiguredAdmin(password);
+  }
+
+  return null;
+}
+
 export async function createSessionToken(session: AdminSession) {
   return new SignJWT(session)
     .setProtectedHeader({ alg: "HS256" })
