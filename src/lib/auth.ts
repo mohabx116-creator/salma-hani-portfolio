@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "salma_admin_session";
 const encoder = new TextEncoder();
+const DEV_ADMIN_EMAIL = "salmahani963@gmail.com";
+const DEV_ADMIN_PASSWORD = "salmamorv";
 
 function secret() {
   const value = process.env.JWT_SECRET || process.env.AUTH_SECRET || "dev-only-change-me";
@@ -25,8 +27,9 @@ export async function verifyPassword(password: string, hash: string) {
 }
 
 export function configuredAdminCredentials() {
-  const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  const password = process.env.ADMIN_PASSWORD;
+  const allowDevFallback = process.env.NODE_ENV !== "production";
+  const email = (process.env.ADMIN_EMAIL || (allowDevFallback ? DEV_ADMIN_EMAIL : "")).toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD || (allowDevFallback ? DEV_ADMIN_PASSWORD : "");
   const name = process.env.ADMIN_NAME?.trim() || "Salma Hani";
 
   if (!email || !password) return null;
@@ -73,6 +76,20 @@ export async function syncConfiguredAdmin(password: string) {
 export async function authenticateAdmin(email: string, password: string) {
   const configured = configuredAdminCredentials();
   const matchesConfiguredAdmin = configured?.email === email && configured.password === password;
+
+  if (matchesConfiguredAdmin && databaseConfigError()) {
+    console.warn(`[auth] Signing in configured admin without database: ${email}`);
+    return {
+      id: "configured-admin",
+      email: configured.email,
+      name: configured.name,
+      role: "ADMIN" as const,
+      passwordHash: "",
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
 
   const user = await findAdminByEmail(email);
   if (user?.role === "ADMIN" && (await verifyPassword(password, user.passwordHash))) {

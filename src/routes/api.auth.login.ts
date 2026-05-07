@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateAdmin, createSessionToken, databaseConfigError, json, sessionCookie } from "@/lib/auth";
+import { authenticateAdmin, createSessionToken, json, sessionCookie } from "@/lib/auth";
 
 export const Route = createFileRoute("/api/auth/login")({
   server: {
@@ -12,9 +12,6 @@ export const Route = createFileRoute("/api/auth/login")({
         if (!email || !password) {
           return json({ error: "Email and password are required" }, 400);
         }
-
-        const databaseError = databaseConfigError();
-        if (databaseError) return json({ error: databaseError }, 500);
 
         let user;
         try {
