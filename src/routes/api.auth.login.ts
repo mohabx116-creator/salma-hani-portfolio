@@ -6,6 +6,11 @@ export const Route = createFileRoute("/api/auth/login")({
     handlers: {
       POST: async ({ request }) => {
         const body = await request.json().catch(() => null);
+
+        if (!body || typeof body !== "object") {
+          return json({ error: "Invalid request body" }, 400);
+        }
+
         const email = String(body?.email ?? "")
           .toLowerCase()
           .trim();
@@ -19,10 +24,25 @@ export const Route = createFileRoute("/api/auth/login")({
         try {
           user = await authenticateAdmin(email, password);
         } catch (error) {
-          console.error("[auth] Login failed", error);
-          return json({ error: "Sign in failed." }, 500);
+          // This will fire if JWT_SECRET is missing in production
+          console.error("[auth] Login error:", error instanceof Error ? error.message : error);
+          return json(
+            {
+              error:
+                process.env.NODE_ENV !== "production"
+                  ? `Server error: ${error instanceof Error ? error.message : "unknown"}`
+                  : "Server configuration error. Contact the administrator.",
+            },
+            500,
+          );
         }
-        if (!user) return json({ error: "Invalid credentials" }, 401);
+
+        if (!user) {
+          console.log("[auth] Login rejected for:", email);
+          return json({ error: "Invalid credentials" }, 401);
+        }
+
+        console.log("[auth] Login accepted for:", user.email);
 
         const token = await createSessionToken({
           userId: user.id,

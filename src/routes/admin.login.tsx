@@ -29,7 +29,13 @@ function AdminLogin() {
           setLoading(false);
           if (!response.ok) {
             const data = await response.json().catch(() => null);
-            setError(response.status === 401 ? "Invalid email or password." : data?.error || "Sign in failed.");
+            if (response.status === 401) {
+              setError("Invalid email or password.");
+            } else if (response.status === 500) {
+              setError(data?.error || "Server error — check environment variables.");
+            } else {
+              setError(data?.error || "Sign in failed. Please try again.");
+            }
             return;
           }
           window.location.href = "/admin";
