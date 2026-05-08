@@ -9,53 +9,64 @@ import { ThemeProvider } from "@/i18n/ThemeContext";
 import type { CmsArtwork } from "@/lib/cms-types";
 
 export const Route = createFileRoute("/artwork/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params }): Promise<{ artwork: CmsArtwork }> => {
     const local = artworks.find((item) => item.id === params.slug);
     if (!local) throw new Error("Artwork not found");
+    const artwork: CmsArtwork = {
+      id: local.id,
+      title: local.title,
+      slug: local.id,
+      year: local.year ? Number(local.year) : null,
+      medium: local.medium ?? local.category,
+      dimensions: null,
+      description: local.description,
+      statement: null,
+      mainImage: local.image,
+      mainImageAlt: local.title,
+      images: [
+        {
+          id: local.id,
+          url: local.image,
+          altText: local.title,
+          caption: local.description,
+          order: 0,
+        },
+      ],
+      series: null,
+      seriesId: null,
+      availability: local.available ? "AVAILABLE" : "NOT_FOR_SALE",
+      price: local.price ?? null,
+      currency: "EUR",
+      showPrice: typeof local.price === "number",
+      isFeatured: local.placement === "featured",
+      displayOrder: 0,
+      status: "PUBLISHED",
+      metaTitle: null,
+      metaDesc: null,
+      ogImage: null,
+    };
+
     return {
-      artwork: {
-        id: local.id,
-        title: local.title,
-        slug: local.id,
-        year: local.year ? Number(local.year) : null,
-        medium: local.medium ?? local.category,
-        dimensions: null,
-        description: local.description,
-        statement: null,
-        mainImage: local.image,
-        mainImageAlt: local.title,
-        images: [
-          {
-            id: local.id,
-            url: local.image,
-            alt: local.title,
-            caption: local.description,
-            order: 0,
-          },
-        ],
-        series: null,
-        availability: local.available ? "AVAILABLE" : "NOT_FOR_SALE",
-        price: local.price ?? null,
-        showPrice: typeof local.price === "number",
-        isFeatured: local.placement === "featured",
-        displayOrder: 0,
-      } satisfies CmsArtwork,
+      artwork,
     };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData.artwork.title} | Salma Hani M` },
-      {
-        name: "description",
-        content:
-          loaderData.artwork.metaDesc ||
-          loaderData.artwork.description?.slice(0, 155) ||
-          "Artwork detail from Salma Hani M.",
-      },
-      { property: "og:title", content: loaderData.artwork.metaTitle || loaderData.artwork.title },
-      { property: "og:image", content: loaderData.artwork.ogImage || loaderData.artwork.mainImage },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const artwork = loaderData?.artwork;
+    return {
+      meta: [
+        { title: artwork ? `${artwork.title} | Salma Hani M` : "Artwork | Salma Hani M" },
+        {
+          name: "description",
+          content:
+            artwork?.metaDesc ||
+            artwork?.description?.slice(0, 155) ||
+            "Artwork detail from Salma Hani M.",
+        },
+        { property: "og:title", content: artwork?.metaTitle || artwork?.title || "Salma Hani M" },
+        { property: "og:image", content: artwork?.ogImage || artwork?.mainImage || "" },
+      ],
+    };
+  },
   component: ArtworkDetail,
 });
 
@@ -68,7 +79,7 @@ function ArtworkDetail() {
         {
           id: artwork.id,
           url: artwork.mainImage,
-          alt: artwork.title,
+          altText: artwork.title,
           caption: artwork.description,
           order: 0,
         },
@@ -138,7 +149,7 @@ function ArtworkDetail() {
                     >
                       <img
                         src={image.url}
-                        alt={image.alt ?? artwork.title}
+                        alt={image.altText ?? artwork.title}
                         className="aspect-[4/5] w-full object-cover"
                       />
                       {image.caption && (

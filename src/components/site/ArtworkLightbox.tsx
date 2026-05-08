@@ -134,7 +134,7 @@ export function ArtworkLightbox({
         <img 
           key={image.url}
           src={image.url} 
-          alt={image.alt ?? ""} 
+          alt={image.altText ?? image.caption ?? ""} 
           className={`
             transition-all duration-300 ease-in-out cursor-zoom-in animate-in fade-in
             ${isZoomed ? "max-w-none max-h-none cursor-zoom-out w-auto h-auto object-cover" : "max-w-full max-h-[80vh] object-contain"}

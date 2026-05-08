@@ -11,17 +11,18 @@ const encoder = new TextEncoder();
 // ---------------------------------------------------------------------------
 
 /**
- * Strip surrounding single or double quotes that users sometimes paste into
- * the Vercel dashboard (e.g. "salmamorv" instead of salmamorv).
+ * Normalize values copied into .env or Vercel dashboard fields.
+ * This removes accidental surrounding whitespace and wrapping quotes.
  */
-function stripEnvQuotes(value: string): string {
+function cleanEnvValue(value: string): string {
+  const trimmed = value.trim();
   if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
   ) {
-    return value.slice(1, -1);
+    return trimmed.slice(1, -1).trim();
   }
-  return value;
+  return trimmed;
 }
 
 function secret() {
@@ -38,7 +39,7 @@ function secret() {
     );
   }
 
-  return encoder.encode(stripEnvQuotes(raw));
+  return encoder.encode(cleanEnvValue(raw));
 }
 
 // ---------------------------------------------------------------------------
@@ -71,9 +72,9 @@ export function configuredAdminCredentials() {
   const rawEmail = process.env.ADMIN_EMAIL ?? "";
   const rawPassword = process.env.ADMIN_PASSWORD ?? "";
 
-  const email = stripEnvQuotes(rawEmail).toLowerCase().trim();
-  const password = stripEnvQuotes(rawPassword);
-  const name = stripEnvQuotes(process.env.ADMIN_NAME?.trim() ?? "") || "Salma Hani";
+  const email = cleanEnvValue(rawEmail).toLowerCase();
+  const password = cleanEnvValue(rawPassword);
+  const name = cleanEnvValue(process.env.ADMIN_NAME ?? "") || "Salma Hani";
 
   // ── server-side debug logging (never logs actual secret values) ──────────
   console.log("[auth] NODE_ENV           :", process.env.NODE_ENV ?? "(not set)");
@@ -105,19 +106,20 @@ export function configuredAdminCredentials() {
 // ---------------------------------------------------------------------------
 export async function authenticateAdmin(inputEmail: string, inputPassword: string) {
   const configured = configuredAdminCredentials();
+  const submittedPassword = cleanEnvValue(inputPassword);
 
-  // Debug: log what we're comparing (never log the actual password)
-  console.log("[auth] Submitted email    :", inputEmail);
-  console.log("[auth] Configured email   :", configured?.email ?? "(none)");
+  // Debug comparison shape only; never log submitted credentials.
+  console.log("[auth] Submitted email present:", inputEmail.length > 0);
+  console.log("[auth] Configured email present:", !!configured?.email);
   console.log(
     "[auth] Password length match:",
-    configured ? inputPassword.length === configured.password.length : false,
+    configured ? submittedPassword.length === configured.password.length : false,
   );
 
   const matches =
     configured !== null &&
     configured.email === inputEmail &&
-    configured.password === inputPassword;
+    configured.password === submittedPassword;
 
   if (!matches) return null;
 

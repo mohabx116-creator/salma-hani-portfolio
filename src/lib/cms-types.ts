@@ -25,7 +25,9 @@ export type CmsArtwork = {
   medium: string;
   dimensions?: string | null;
   description?: string | null;
+  statement?: string | null;
   mainImage: string;
+  mainImageAlt?: string | null;
   images: CmsArtworkImage[];
   series?: CmsSeries | null;
   seriesId?: string | null;
@@ -82,4 +84,5 @@ export const AVAILABILITY_LABELS: Record<Availability, string> = {
   SOLD: "Sold",
   COMMISSION: "Commission",
   NOT_FOR_SALE: "Not for sale",
+  RESERVED: "Reserved",
 };
