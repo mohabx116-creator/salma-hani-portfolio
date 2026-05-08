@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/admin/artworks")({
         const availability = url.searchParams.get("availability");
         const seriesId = url.searchParams.get("seriesId");
 
-        return json({ artworks: listArtworks({ availability, seriesId }) });
+        return json({ artworks: await listArtworks({ availability, seriesId }) });
       },
       POST: async ({ request }) => {
         const guard = await requireAdmin(request);
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/admin/artworks")({
         }
 
         const images = Array.isArray(body.images) ? body.images : [];
-        const artwork = createArtwork({
+        const artwork = await createArtwork({
           ...payload,
           availability: payload.availability as Availability,
           status: payload.status as ContentStatus,

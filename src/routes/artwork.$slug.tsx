@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArtworkLightbox } from "@/components/site/ArtworkLightbox";
 import { Footer } from "@/components/site/Footer";
 import { Nav } from "@/components/site/Nav";
@@ -9,9 +9,9 @@ import { ThemeProvider } from "@/i18n/ThemeContext";
 import type { CmsArtwork } from "@/lib/cms-types";
 
 export const Route = createFileRoute("/artwork/$slug")({
-  loader: async ({ params }): Promise<{ artwork: CmsArtwork }> => {
+  loader: async ({ params }): Promise<{ artwork: CmsArtwork | null }> => {
     const local = artworks.find((item) => item.id === params.slug);
-    if (!local) throw new Error("Artwork not found");
+    if (!local) return { artwork: null };
     const artwork: CmsArtwork = {
       id: local.id,
       title: local.title,
@@ -71,8 +71,43 @@ export const Route = createFileRoute("/artwork/$slug")({
 });
 
 function ArtworkDetail() {
-  const { artwork } = Route.useLoaderData();
+  const params = Route.useParams();
+  const { artwork: initialArtwork } = Route.useLoaderData();
+  const [artwork, setArtwork] = useState<CmsArtwork | null>(initialArtwork);
+  const [loaded, setLoaded] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  
+  useEffect(() => {
+    fetch(`/api/artworks?slug=${encodeURIComponent(params.slug)}`)
+      .then((response) => response.json())
+      .then((data: { artworks?: CmsArtwork[] }) => {
+        setArtwork(data.artworks?.[0] ?? initialArtwork);
+      })
+      .catch(() => undefined)
+      .finally(() => setLoaded(true));
+  }, [initialArtwork, params.slug]);
+
+  if (!artwork) {
+    return (
+      <ThemeProvider>
+        <LanguageProvider>
+          <div className="min-h-screen bg-background text-foreground">
+            <Nav />
+            <main className="grid min-h-[70vh] place-items-center px-[5vw] pt-28">
+              <div className="text-center">
+                <p className="eyebrow">{loaded ? "Artwork not found" : "Loading artwork"}</p>
+                <h1 className="mt-4 font-serif text-4xl italic">
+                  {loaded ? "This work is not available." : "Opening artwork..."}
+                </h1>
+              </div>
+            </main>
+            <Footer />
+          </div>
+        </LanguageProvider>
+      </ThemeProvider>
+    );
+  }
+
   const images = artwork.images.length
     ? artwork.images
     : [

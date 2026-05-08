@@ -44,7 +44,7 @@ export function Footer() {
             <a href="#commissions" className="hover:text-foreground transition-colors">Commissions</a>
           </div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-ink-soft/60">
-            © {year} · {t.footer.rights}
+            Copyright {year} / {t.footer.rights}
           </p>
         </div>
       </div>

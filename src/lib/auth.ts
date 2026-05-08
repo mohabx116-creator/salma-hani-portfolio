@@ -1,19 +1,9 @@
 import { jwtVerify, SignJWT } from "jose";
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
 const SESSION_COOKIE = "salma_admin_session";
 const encoder = new TextEncoder();
+const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Normalize values copied into .env or Vercel dashboard fields.
- * This removes accidental surrounding whitespace and wrapping quotes.
- */
 function cleanEnvValue(value: string): string {
   const trimmed = value.trim();
   if (
@@ -32,93 +22,41 @@ function secret() {
     (process.env.NODE_ENV !== "production" ? "dev-only-secret-change-me" : "");
 
   if (!raw) {
-    // Hard-fail at token-creation time in production so the misconfiguration
-    // is visible immediately rather than producing invalid tokens.
-    throw new Error(
-      "[auth] JWT_SECRET is not set. Add it to your Vercel environment variables.",
-    );
+    throw new Error("[auth] JWT_SECRET is not set. Add it to your Vercel environment variables.");
   }
 
   return encoder.encode(cleanEnvValue(raw));
 }
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 export type AdminSession = {
   userId: string;
   email: string;
   role: "ADMIN" | "VIEWER";
 };
 
-// ---------------------------------------------------------------------------
-// Credential resolution
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the configured admin credentials from environment variables.
- *
- * Required env vars (set these in the Vercel dashboard – NO surrounding quotes):
- *   ADMIN_EMAIL    e.g.  salmahani963@gmail.com
- *   ADMIN_PASSWORD e.g.  yourSecurePassword
- *   JWT_SECRET     e.g.  a-long-random-string-at-least-32-chars
- *
- * In development (NODE_ENV !== "production") the app will warn but continue.
- * In production, missing credentials result in every login attempt failing.
- */
 export function configuredAdminCredentials() {
   const isProduction = process.env.NODE_ENV === "production";
-
-  const rawEmail = process.env.ADMIN_EMAIL ?? "";
-  const rawPassword = process.env.ADMIN_PASSWORD ?? "";
-
-  const email = cleanEnvValue(rawEmail).toLowerCase();
-  const password = cleanEnvValue(rawPassword);
+  const email = cleanEnvValue(process.env.ADMIN_EMAIL ?? "").toLowerCase();
+  const password = cleanEnvValue(process.env.ADMIN_PASSWORD ?? "");
   const name = cleanEnvValue(process.env.ADMIN_NAME ?? "") || "Salma Hani";
 
-  // ── server-side debug logging (never logs actual secret values) ──────────
-  console.log("[auth] NODE_ENV           :", process.env.NODE_ENV ?? "(not set)");
-  console.log("[auth] ADMIN_EMAIL present :", rawEmail.length > 0);
-  console.log("[auth] ADMIN_PASSWORD present:", rawPassword.length > 0);
-  console.log("[auth] JWT_SECRET present :", !!(process.env.JWT_SECRET || process.env.AUTH_SECRET));
-  // ------------------------------------------------------------------------
-
   if (!email || !password) {
-    if (isProduction) {
-      console.error(
-        "[auth] FATAL: ADMIN_EMAIL and/or ADMIN_PASSWORD are not set in environment variables. " +
-        "Go to Vercel → Project Settings → Environment Variables and add them without surrounding quotes.",
-      );
-    } else {
-      console.warn(
-        "[auth] WARNING: ADMIN_EMAIL or ADMIN_PASSWORD missing from .env – login will fail. " +
-        "Copy .env.example to .env and fill in the values.",
-      );
-    }
+    const message =
+      "[auth] ADMIN_EMAIL and ADMIN_PASSWORD are not configured. Add them without surrounding quotes.";
+    if (isProduction) console.error(message);
+    else console.warn(message);
     return null;
   }
 
   return { email, password, name };
 }
 
-// ---------------------------------------------------------------------------
-// Authentication
-// ---------------------------------------------------------------------------
 export async function authenticateAdmin(inputEmail: string, inputPassword: string) {
   const configured = configuredAdminCredentials();
   const submittedPassword = cleanEnvValue(inputPassword);
-
-  // Debug comparison shape only; never log submitted credentials.
-  console.log("[auth] Submitted email present:", inputEmail.length > 0);
-  console.log("[auth] Configured email present:", !!configured?.email);
-  console.log(
-    "[auth] Password length match:",
-    configured ? submittedPassword.length === configured.password.length : false,
-  );
-
   const matches =
     configured !== null &&
-    configured.email === inputEmail &&
+    configured.email === inputEmail.toLowerCase().trim() &&
     configured.password === submittedPassword;
 
   if (!matches) return null;
@@ -135,9 +73,6 @@ export async function authenticateAdmin(inputEmail: string, inputPassword: strin
   };
 }
 
-// ---------------------------------------------------------------------------
-// Session / JWT
-// ---------------------------------------------------------------------------
 export async function createSessionToken(session: AdminSession) {
   return new SignJWT(session)
     .setProtectedHeader({ alg: "HS256" })
@@ -181,9 +116,6 @@ export async function requireAdmin(request: Request) {
   return { session, response: null };
 }
 
-// ---------------------------------------------------------------------------
-// Cookie helpers
-// ---------------------------------------------------------------------------
 export function sessionCookie(token: string) {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${secure}`;
@@ -193,9 +125,6 @@ export function clearSessionCookie() {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-// ---------------------------------------------------------------------------
-// JSON response helper
-// ---------------------------------------------------------------------------
 export function json(data: unknown, status = 200, headers?: HeadersInit) {
   return new Response(JSON.stringify(data), {
     status,
@@ -204,4 +133,26 @@ export function json(data: unknown, status = 200, headers?: HeadersInit) {
       ...headers,
     },
   });
+}
+
+export function clientKey(request: Request, scope: string) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  return `${scope}:${forwarded || realIp || "unknown"}`;
+}
+
+export function checkRateLimit(key: string, limit: number, windowMs: number) {
+  const current = Date.now();
+  const bucket = rateLimitBuckets.get(key);
+  if (!bucket || bucket.resetAt <= current) {
+    rateLimitBuckets.set(key, { count: 1, resetAt: current + windowMs });
+    return { ok: true, retryAfter: 0 };
+  }
+
+  bucket.count += 1;
+  if (bucket.count > limit) {
+    return { ok: false, retryAfter: Math.ceil((bucket.resetAt - current) / 1000) };
+  }
+
+  return { ok: true, retryAfter: 0 };
 }

@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/admin/inquiries")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        return json({ inquiries: listInquiries() });
+        return json({ inquiries: await listInquiries() });
       },
       PUT: async ({ request }) => {
         const guard = await requireAdmin(request);
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/admin/inquiries")({
         const id = String(body?.id ?? "");
         if (!id) return json({ error: "Inquiry id is required" }, 400);
 
-        const inquiry = updateInquiry({
+        const inquiry = await updateInquiry({
           id,
           read: typeof body?.read === "boolean" ? body.read : undefined,
           archived: body?.archived === true,

@@ -14,7 +14,8 @@ import { Social } from "@/components/site/Social";
 import { artworks as staticArtworks } from "@/data/artworks";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/i18n/ThemeContext";
-import { staticArtworkToSiteArtwork, type SiteArtwork } from "@/lib/site-artworks";
+import type { CmsArtwork } from "@/lib/cms-types";
+import { cmsArtworkToSiteArtwork, staticArtworkToSiteArtwork, type SiteArtwork } from "@/lib/site-artworks";
 
 export const Route = createFileRoute("/home")({
   loader: async () => {
@@ -37,7 +38,8 @@ export const Route = createFileRoute("/home")({
 });
 
 function HomePage() {
-  const { artworks } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const [artworks, setArtworks] = useState<SiteArtwork[]>(loaderData.artworks);
   const [selected, setSelected] = useState<SiteArtwork | null>(null);
   const featured = artworks.filter((artwork) => artwork.isFeatured).slice(0, 3);
   const heroArtwork = featured[0] ?? artworks[0];
@@ -54,6 +56,17 @@ function HomePage() {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/artworks")
+      .then((response) => response.json())
+      .then((data: { artworks?: CmsArtwork[] }) => {
+        if (data.artworks?.length) {
+          setArtworks(data.artworks.map(cmsArtworkToSiteArtwork));
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   return (

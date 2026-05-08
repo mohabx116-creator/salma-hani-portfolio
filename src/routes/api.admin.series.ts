@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/admin/series")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        return json({ series: listSeries() });
+        return json({ series: await listSeries() });
       },
       POST: async ({ request }) => {
         const guard = await requireAdmin(request);
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/admin/series")({
         const name = String(body?.name ?? "").trim();
         if (!name) return json({ error: "Series name is required" }, 400);
 
-        const series = createSeries({
+        const series = await createSeries({
           name,
           slug: String(body?.slug ?? "").trim() || slugify(name),
           description: String(body?.description ?? "").trim() || null,

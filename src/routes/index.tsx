@@ -82,7 +82,7 @@ function EntrancePage() {
               </a>
             </div>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-ink-soft">© 2026 Salma Hani</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-ink-soft">Copyright 2026 Salma Hani</p>
         </footer>
       </div>
     </main>

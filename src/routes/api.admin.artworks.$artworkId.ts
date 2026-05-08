@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        const artwork = findArtworkById(params.artworkId);
+        const artwork = await findArtworkById(params.artworkId);
         if (!artwork) return json({ error: "Artwork not found" }, 404);
         return json({ artwork });
       },
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
         }
 
         const images = Array.isArray(body.images) ? body.images : [];
-        const artwork = updateArtwork(params.artworkId, {
+        const artwork = await updateArtwork(params.artworkId, {
           ...payload,
           availability: payload.availability as Availability,
           status: payload.status as ContentStatus,
@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/admin/artworks/$artworkId")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        deleteArtwork(params.artworkId);
+        await deleteArtwork(params.artworkId);
         return json({ ok: true });
       },
     },

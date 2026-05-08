@@ -1,10 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateAdmin, createSessionToken, json, sessionCookie } from "@/lib/auth";
+import { authenticateAdmin, checkRateLimit, clientKey, createSessionToken, json, sessionCookie } from "@/lib/auth";
 
 export const Route = createFileRoute("/api/auth/login")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const rate = checkRateLimit(clientKey(request, "login"), 5, 15 * 60 * 1000);
+        if (!rate.ok) {
+          return json({ error: "Too many login attempts. Try again later." }, 429, {
+            "retry-after": String(rate.retryAfter),
+          });
+        }
+
         const body = await request.json().catch(() => null);
 
         if (!body || typeof body !== "object") {
@@ -24,7 +31,6 @@ export const Route = createFileRoute("/api/auth/login")({
         try {
           user = await authenticateAdmin(email, password);
         } catch (error) {
-          // This will fire if JWT_SECRET is missing in production
           console.error("[auth] Login error:", error instanceof Error ? error.message : error);
           return json(
             {
@@ -38,11 +44,8 @@ export const Route = createFileRoute("/api/auth/login")({
         }
 
         if (!user) {
-          console.log("[auth] Login rejected for:", email);
           return json({ error: "Invalid credentials" }, 401);
         }
-
-        console.log("[auth] Login accepted for:", user.email);
 
         const token = await createSessionToken({
           userId: user.id,

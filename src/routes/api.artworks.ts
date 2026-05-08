@@ -9,10 +9,13 @@ export const Route = createFileRoute("/api/artworks")({
         const url = new URL(request.url);
         const featured = url.searchParams.get("featured");
         const availability = url.searchParams.get("availability");
+        const slug = url.searchParams.get("slug");
         return json({
-          artworks: listArtworks({
+          artworks: await listArtworks({
             featured: featured === "true" ? true : undefined,
             availability,
+            slug,
+            publishedOnly: true,
           }),
         });
       },

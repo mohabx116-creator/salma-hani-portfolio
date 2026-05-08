@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/admin/artworks/reorder")({
 
         const body = (await request.json().catch(() => null)) as { ids?: string[] } | null;
         const ids = body?.ids ?? [];
-        reorderArtworks(ids);
+        await reorderArtworks(ids);
 
         return json({ ok: true });
       },

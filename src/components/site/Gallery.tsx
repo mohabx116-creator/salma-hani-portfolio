@@ -1,13 +1,24 @@
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import type { SiteArtwork } from "@/lib/site-artworks";
 
 export function Gallery({ items, onSelect }: { items: SiteArtwork[]; onSelect: (a: SiteArtwork) => void }) {
   const { t } = useLang();
-  const categories = ["all", ...new Set(items.map((item) => item.category).filter(Boolean))];
+  const categories = useMemo(() => ["all", ...new Set(items.map((item) => item.category).filter(Boolean))], [items]);
+  const years = useMemo(
+    () => ["all", ...new Set(items.flatMap((item) => (item.year ? [item.year] : [])))],
+    [items],
+  );
+  const availability = ["all", "available", "unavailable"];
   const [active, setActive] = useState<string>("all");
+  const [activeYear, setActiveYear] = useState<string>("all");
+  const [activeAvailability, setActiveAvailability] = useState<string>("all");
 
-  const filteredItems = active === "all" ? items : items.filter((a) => a.category === active);
+  const filteredItems = items
+    .filter((a) => active === "all" || a.category === active)
+    .filter((a) => activeYear === "all" || a.year === activeYear)
+    .filter((a) => activeAvailability === "all" || (activeAvailability === "available" ? a.available : !a.available));
 
   return (
     <section id="works" className="py-32 md:py-48 px-[5vw] cinematic-band section-depth">
@@ -18,7 +29,8 @@ export function Gallery({ items, onSelect }: { items: SiteArtwork[]; onSelect: (
           <p className="mt-4 text-ink-soft font-light">{t.gallery.sub}</p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-16 pb-8 border-b border-border/70">
+        <div className="mb-16 grid gap-5 border-b border-border/70 pb-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
           {categories.map((c) => (
             <button
               key={c}
@@ -32,13 +44,39 @@ export function Gallery({ items, onSelect }: { items: SiteArtwork[]; onSelect: (
               {c === "all" ? t.gallery.all : c}
             </button>
           ))}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {years.map((year) => (
+              <button
+                key={year}
+                onClick={() => setActiveYear(year)}
+                className={`text-[10px] uppercase tracking-[0.25em] transition-colors duration-500 ${
+                  activeYear === year ? "text-gold" : "text-ink-soft/70 hover:text-gold"
+                }`}
+              >
+                {year === "all" ? "All years" : year}
+              </button>
+            ))}
+            {availability.map((item) => (
+              <button
+                key={item}
+                onClick={() => setActiveAvailability(item)}
+                className={`text-[10px] uppercase tracking-[0.25em] transition-colors duration-500 ${
+                  activeAvailability === item ? "text-gold" : "text-ink-soft/70 hover:text-gold"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
           {filteredItems.map((a, i) => (
-            <button
+            <Link
               key={a.id}
-              onClick={() => onSelect(a)}
+              to="/artwork/$slug"
+              params={{ slug: a.slug }}
               className={`group block text-start ${i % 3 === 1 ? "md:mt-16" : ""}`}
             >
               <div className="relative overflow-hidden bg-stone-soft aspect-[4/5] shadow-soft art-vignette glass-card p-2">
@@ -56,7 +94,17 @@ export function Gallery({ items, onSelect }: { items: SiteArtwork[]; onSelect: (
                   {a.category}{a.year ? ` · ${a.year}` : ""}
                 </p>
               </div>
-            </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onSelect(a);
+                }}
+                className="mt-3 text-[10px] uppercase tracking-[0.24em] text-gold"
+              >
+                Quick view
+              </button>
+            </Link>
           ))}
         </div>
       </div>

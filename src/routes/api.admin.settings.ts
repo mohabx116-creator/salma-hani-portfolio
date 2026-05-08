@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/admin/settings")({
         const guard = await requireAdmin(request);
         if (guard.response) return guard.response;
 
-        return json({ settings: listSettings() });
+        return json({ settings: await listSettings() });
       },
       PUT: async ({ request }) => {
         const guard = await requireAdmin(request);
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/admin/settings")({
         const entries = body?.settings as Record<string, string> | undefined;
         if (!entries) return json({ error: "Settings payload is required" }, 400);
 
-        updateSettings(entries);
+        await updateSettings(entries);
 
         return json({ ok: true });
       },

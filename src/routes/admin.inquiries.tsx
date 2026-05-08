@@ -31,7 +31,7 @@ function AdminInquiries() {
                 <a href={`mailto:${inquiry.email}`} className="text-sm text-gold">{inquiry.email}</a>
               </div>
               <div className="text-xs uppercase tracking-[0.2em] text-ink-soft">
-                {inquiry.interest} · {new Date(inquiry.createdAt).toLocaleDateString()}
+                {inquiry.interest} / {new Date(inquiry.createdAt).toLocaleDateString()}
               </div>
             </div>
             {inquiry.artworkSlug && <p className="mt-4 text-sm text-ink-soft">Artwork: /artwork/{inquiry.artworkSlug}</p>}

@@ -21,6 +21,7 @@ import { Route as ApiUploadRouteImport } from './routes/api.upload'
 import { Route as ApiNewsletterRouteImport } from './routes/api.newsletter'
 import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as ApiArtworksRouteImport } from './routes/api.artworks'
+import { Route as AdminSubscribersRouteImport } from './routes/admin.subscribers'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeriesRouteImport } from './routes/admin.series'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -29,6 +30,7 @@ import { Route as AdminArtworksRouteImport } from './routes/admin.artworks'
 import { Route as ApiAuthMeRouteImport } from './routes/api.auth.me'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
 import { Route as ApiAuthLoginRouteImport } from './routes/api.auth.login'
+import { Route as ApiAdminSubscribersRouteImport } from './routes/api.admin.subscribers'
 import { Route as ApiAdminSettingsRouteImport } from './routes/api.admin.settings'
 import { Route as ApiAdminSeriesRouteImport } from './routes/api.admin.series'
 import { Route as ApiAdminInquiriesRouteImport } from './routes/api.admin.inquiries'
@@ -98,6 +100,11 @@ const ApiArtworksRoute = ApiArtworksRouteImport.update({
   path: '/api/artworks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
+  id: '/subscribers',
+  path: '/subscribers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -136,6 +143,11 @@ const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
 const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
   id: '/api/auth/login',
   path: '/api/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSubscribersRoute = ApiAdminSubscribersRouteImport.update({
+  id: '/api/admin/subscribers',
+  path: '/api/admin/subscribers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSettingsRoute = ApiAdminSettingsRouteImport.update({
@@ -192,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -204,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/inquiries': typeof ApiAdminInquiriesRoute
   '/api/admin/series': typeof ApiAdminSeriesRoute
   '/api/admin/settings': typeof ApiAdminSettingsRoute
+  '/api/admin/subscribers': typeof ApiAdminSubscribersRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -221,6 +235,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -233,6 +248,7 @@ export interface FileRoutesByTo {
   '/api/admin/inquiries': typeof ApiAdminInquiriesRoute
   '/api/admin/series': typeof ApiAdminSeriesRoute
   '/api/admin/settings': typeof ApiAdminSettingsRoute
+  '/api/admin/subscribers': typeof ApiAdminSubscribersRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -252,6 +268,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -264,6 +281,7 @@ export interface FileRoutesById {
   '/api/admin/inquiries': typeof ApiAdminInquiriesRoute
   '/api/admin/series': typeof ApiAdminSeriesRoute
   '/api/admin/settings': typeof ApiAdminSettingsRoute
+  '/api/admin/subscribers': typeof ApiAdminSubscribersRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -284,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/series'
     | '/admin/settings'
+    | '/admin/subscribers'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -296,6 +315,7 @@ export interface FileRouteTypes {
     | '/api/admin/inquiries'
     | '/api/admin/series'
     | '/api/admin/settings'
+    | '/api/admin/subscribers'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -313,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/series'
     | '/admin/settings'
+    | '/admin/subscribers'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -325,6 +346,7 @@ export interface FileRouteTypes {
     | '/api/admin/inquiries'
     | '/api/admin/series'
     | '/api/admin/settings'
+    | '/api/admin/subscribers'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -343,6 +365,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/series'
     | '/admin/settings'
+    | '/admin/subscribers'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -355,6 +378,7 @@ export interface FileRouteTypes {
     | '/api/admin/inquiries'
     | '/api/admin/series'
     | '/api/admin/settings'
+    | '/api/admin/subscribers'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -378,6 +402,7 @@ export interface RootRouteChildren {
   ApiAdminInquiriesRoute: typeof ApiAdminInquiriesRoute
   ApiAdminSeriesRoute: typeof ApiAdminSeriesRoute
   ApiAdminSettingsRoute: typeof ApiAdminSettingsRoute
+  ApiAdminSubscribersRoute: typeof ApiAdminSubscribersRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
@@ -469,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiArtworksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/subscribers': {
+      id: '/admin/subscribers'
+      path: '/subscribers'
+      fullPath: '/admin/subscribers'
+      preLoaderRoute: typeof AdminSubscribersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -523,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/login'
       fullPath: '/api/auth/login'
       preLoaderRoute: typeof ApiAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/subscribers': {
+      id: '/api/admin/subscribers'
+      path: '/api/admin/subscribers'
+      fullPath: '/api/admin/subscribers'
+      preLoaderRoute: typeof ApiAdminSubscribersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/settings': {
@@ -604,6 +643,7 @@ interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminSeriesRoute: typeof AdminSeriesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSubscribersRoute: typeof AdminSubscribersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -613,6 +653,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminSeriesRoute: AdminSeriesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSubscribersRoute: AdminSubscribersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -647,6 +688,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminInquiriesRoute: ApiAdminInquiriesRoute,
   ApiAdminSeriesRoute: ApiAdminSeriesRoute,
   ApiAdminSettingsRoute: ApiAdminSettingsRoute,
+  ApiAdminSubscribersRoute: ApiAdminSubscribersRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,

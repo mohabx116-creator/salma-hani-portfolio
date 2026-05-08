@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { list, put } from "@vercel/blob";
 import { artworks as bundledArtworks } from "@/data/artworks";
 import type {
   Availability,
@@ -17,12 +21,24 @@ type StaticCmsState = {
   subscribers: Subscriber[];
 };
 
-const globalForStaticCms = globalThis as typeof globalThis & {
-  salmaStaticCms?: StaticCmsState;
-};
+type SeriesWithCount = CmsSeries & { _count: { artworks: number } };
 
+const BLOB_PATH = "cms/state.json";
+const LOCAL_PATH = path.join(process.cwd(), ".data", "cms-state.json");
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const globalForCms = globalThis as typeof globalThis & {
+  salmaCmsState?: StaticCmsState;
+};
+
+function hasBlobStore() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function isVercelRuntime() {
+  return process.env.VERCEL === "1";
+}
 
 function bundledArtworkToCmsArtwork(
   artwork: (typeof bundledArtworks)[number],
@@ -37,6 +53,7 @@ function bundledArtworkToCmsArtwork(
     dimensions: null,
     description: artwork.description,
     mainImage: artwork.image,
+    mainImageAlt: artwork.title,
     images: [
       {
         id: `${artwork.id}-main`,
@@ -68,163 +85,265 @@ function initialState(): StaticCmsState {
     artworks: bundledArtworks.map(bundledArtworkToCmsArtwork),
     inquiries: [],
     series: [],
-    settings: [],
+    settings: [
+      { key: "artistName", value: "Salma Hani M" },
+      { key: "tagline", value: "Capturing the soul through color and silence" },
+      { key: "instagram", value: "https://instagram.com/__morvii_" },
+      { key: "publicEmail", value: "studio@salma-hani.com" },
+      { key: "commissionPricing", value: "" },
+      { key: "metaTitle", value: "Salma Hani M | Fine Artist" },
+      { key: "metaDescription", value: "Fine art portfolio of Salma Hani M." },
+    ],
     subscribers: [],
   };
 }
 
-function state() {
-  globalForStaticCms.salmaStaticCms ??= initialState();
-  return globalForStaticCms.salmaStaticCms;
+function normalizeState(input: Partial<StaticCmsState> | null | undefined): StaticCmsState {
+  const fallback = initialState();
+  return {
+    artworks: Array.isArray(input?.artworks) && input.artworks.length ? input.artworks : fallback.artworks,
+    inquiries: Array.isArray(input?.inquiries) ? input.inquiries : fallback.inquiries,
+    series: Array.isArray(input?.series) ? input.series : fallback.series,
+    settings: Array.isArray(input?.settings) && input.settings.length ? input.settings : fallback.settings,
+    subscribers: Array.isArray(input?.subscribers) ? input.subscribers : fallback.subscribers,
+  };
 }
 
-function withSeries(artwork: CmsArtwork) {
-  const series = artwork.seriesId
-    ? state().series.find((item) => item.id === artwork.seriesId)
-    : null;
+async function readFromBlob() {
+  const blobs = await list({ prefix: BLOB_PATH, limit: 1 });
+  const blob = blobs.blobs.find((item) => item.pathname === BLOB_PATH);
+  if (!blob) return null;
+  const response = await fetch(blob.url, { cache: "no-store" });
+  if (!response.ok) return null;
+  return (await response.json()) as Partial<StaticCmsState>;
+}
+
+async function readFromLocalFile() {
+  if (!existsSync(LOCAL_PATH)) return null;
+  const raw = await readFile(LOCAL_PATH, "utf8");
+  return JSON.parse(raw) as Partial<StaticCmsState>;
+}
+
+async function loadState(): Promise<StaticCmsState> {
+  if (globalForCms.salmaCmsState) return globalForCms.salmaCmsState;
+
+  try {
+    const stored = hasBlobStore() ? await readFromBlob() : await readFromLocalFile();
+    globalForCms.salmaCmsState = normalizeState(stored);
+  } catch {
+    globalForCms.salmaCmsState = initialState();
+  }
+
+  return globalForCms.salmaCmsState;
+}
+
+async function persistState(next: StaticCmsState) {
+  if (hasBlobStore()) {
+    await put(BLOB_PATH, JSON.stringify(next, null, 2), {
+      access: "public",
+      addRandomSuffix: false,
+      contentType: "application/json",
+    });
+    return;
+  }
+
+  if (isVercelRuntime()) {
+    throw new Error("Persistent CMS storage is not configured. Add BLOB_READ_WRITE_TOKEN in Vercel.");
+  }
+
+  await mkdir(path.dirname(LOCAL_PATH), { recursive: true });
+  await writeFile(LOCAL_PATH, JSON.stringify(next, null, 2), "utf8");
+}
+
+async function mutateState<T>(mutator: (store: StaticCmsState) => T | Promise<T>) {
+  const store = await loadState();
+  const result = await mutator(store);
+  await persistState(store);
+  return result;
+}
+
+function withSeries(store: StaticCmsState, artwork: CmsArtwork) {
+  const series = artwork.seriesId ? store.series.find((item) => item.id === artwork.seriesId) : null;
   return { ...artwork, series: series ?? null };
 }
 
-export function listArtworks(
-  filters: { availability?: string | null; seriesId?: string | null; featured?: boolean } = {},
+export async function listArtworks(
+  filters: {
+    availability?: string | null;
+    seriesId?: string | null;
+    featured?: boolean;
+    slug?: string | null;
+    publishedOnly?: boolean;
+  } = {},
 ) {
-  return state()
-    .artworks.filter(
-      (artwork) => !filters.availability || artwork.availability === filters.availability,
-    )
+  const store = await loadState();
+  return store.artworks
+    .filter((artwork) => !filters.availability || artwork.availability === filters.availability)
     .filter((artwork) => !filters.seriesId || artwork.seriesId === filters.seriesId)
     .filter((artwork) => filters.featured === undefined || artwork.isFeatured === filters.featured)
+    .filter((artwork) => !filters.slug || artwork.slug === filters.slug)
+    .filter((artwork) => !filters.publishedOnly || artwork.status !== "DRAFT")
     .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(withSeries);
+    .map((artwork) => withSeries(store, artwork));
 }
 
-export function findArtworkById(id: string) {
-  const artwork = state().artworks.find((item) => item.id === id);
-  return artwork ? withSeries(artwork) : null;
+export async function findArtworkById(id: string) {
+  const store = await loadState();
+  const artwork = store.artworks.find((item) => item.id === id);
+  return artwork ? withSeries(store, artwork) : null;
 }
 
-export function findArtworkBySlug(slug: string) {
-  const artwork = state().artworks.find((item) => item.slug === slug);
-  return artwork ? withSeries(artwork) : null;
+export async function findArtworkBySlug(slug: string) {
+  const store = await loadState();
+  const artwork = store.artworks.find((item) => item.slug === slug && item.status !== "DRAFT");
+  return artwork ? withSeries(store, artwork) : null;
 }
 
-export function createArtwork(
+export async function createArtwork(
   payload: Omit<CmsArtwork, "id" | "createdAt" | "updatedAt" | "series" | "images"> & {
     images?: CmsArtwork["images"];
   },
 ) {
-  const artwork: CmsArtwork = {
-    ...payload,
-    id: id("artwork"),
-    slug: payload.slug || slugify(payload.title),
-    images: payload.images ?? [],
-    series: null,
-    createdAt: now(),
-    updatedAt: now(),
-  };
-  state().artworks.push(artwork);
-  return withSeries(artwork);
+  return mutateState((store) => {
+    const artwork: CmsArtwork = {
+      ...payload,
+      id: id("artwork"),
+      slug: payload.slug || slugify(payload.title),
+      images: payload.images ?? [],
+      series: null,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+    store.artworks.push(artwork);
+    return withSeries(store, artwork);
+  });
 }
 
-export function updateArtwork(
+export async function updateArtwork(
   artworkId: string,
   payload: Omit<CmsArtwork, "id" | "createdAt" | "updatedAt" | "series" | "images"> & {
     images?: CmsArtwork["images"];
   },
 ) {
-  const index = state().artworks.findIndex((item) => item.id === artworkId);
-  if (index === -1) return null;
-  const previous = state().artworks[index];
-  const artwork: CmsArtwork = {
-    ...previous,
-    ...payload,
-    slug: payload.slug || slugify(payload.title),
-    images: payload.images ?? [],
-    updatedAt: now(),
-  };
-  state().artworks[index] = artwork;
-  return withSeries(artwork);
+  return mutateState((store) => {
+    const index = store.artworks.findIndex((item) => item.id === artworkId);
+    if (index === -1) return null;
+    const previous = store.artworks[index];
+    const artwork: CmsArtwork = {
+      ...previous,
+      ...payload,
+      slug: payload.slug || slugify(payload.title),
+      images: payload.images ?? [],
+      updatedAt: now(),
+    };
+    store.artworks[index] = artwork;
+    return withSeries(store, artwork);
+  });
 }
 
-export function deleteArtwork(artworkId: string) {
-  const store = state();
-  store.artworks = store.artworks.filter((item) => item.id !== artworkId);
+export async function deleteArtwork(artworkId: string) {
+  await mutateState((store) => {
+    store.artworks = store.artworks.filter((item) => item.id !== artworkId);
+  });
 }
 
-export function reorderArtworks(ids: string[]) {
-  const order = new Map(ids.map((item, index) => [item, index]));
-  for (const artwork of state().artworks) {
-    artwork.displayOrder = order.get(artwork.id) ?? artwork.displayOrder;
-  }
+export async function reorderArtworks(ids: string[]) {
+  await mutateState((store) => {
+    const order = new Map(ids.map((item, index) => [item, index]));
+    for (const artwork of store.artworks) {
+      artwork.displayOrder = order.get(artwork.id) ?? artwork.displayOrder;
+    }
+  });
 }
 
-export function listSeries() {
-  return state()
-    .series.map((series) => ({
+export async function listSeries(): Promise<SeriesWithCount[]> {
+  const store = await loadState();
+  return store.series
+    .map((series) => ({
       ...series,
       _count: {
-        artworks: state().artworks.filter((artwork) => artwork.seriesId === series.id).length,
+        artworks: store.artworks.filter((artwork) => artwork.seriesId === series.id).length,
       },
     }))
     .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
 }
 
-export function createSeries(input: { name: string; slug?: string; description?: string | null }) {
-  const series: CmsSeries = {
-    id: id("series"),
-    name: input.name,
-    slug: input.slug || slugify(input.name),
-    description: input.description ?? null,
-    displayOrder: state().series.length,
-  };
-  state().series.push(series);
-  return { ...series, _count: { artworks: 0 } };
+export async function createSeries(input: { name: string; slug?: string; description?: string | null }) {
+  return mutateState((store) => {
+    const series: CmsSeries = {
+      id: id("series"),
+      name: input.name,
+      slug: input.slug || slugify(input.name),
+      description: input.description ?? null,
+      displayOrder: store.series.length,
+    };
+    store.series.push(series);
+    return { ...series, _count: { artworks: 0 } };
+  });
 }
 
-export function listInquiries() {
-  return state()
-    .inquiries.filter((item) => item.status !== "CLOSED")
+export async function listInquiries() {
+  const store = await loadState();
+  return store.inquiries
+    .filter((item) => item.status !== "CLOSED")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function createInquiry(input: Omit<Inquiry, "id" | "read" | "status" | "createdAt">) {
-  const inquiry: Inquiry = {
-    ...input,
-    id: id("inquiry"),
-    read: false,
-    status: "OPEN",
-    createdAt: now(),
-  };
-  state().inquiries.unshift(inquiry);
-  return inquiry;
+export async function createInquiry(input: Omit<Inquiry, "id" | "read" | "status" | "createdAt">) {
+  return mutateState((store) => {
+    const inquiry: Inquiry = {
+      ...input,
+      id: id("inquiry"),
+      read: false,
+      status: "OPEN",
+      createdAt: now(),
+    };
+    store.inquiries.unshift(inquiry);
+    return inquiry;
+  });
 }
 
-export function updateInquiry(input: { id: string; read?: boolean; archived?: boolean }) {
-  const inquiry = state().inquiries.find((item) => item.id === input.id);
-  if (!inquiry) return null;
-  if (typeof input.read === "boolean") inquiry.read = input.read;
-  if (input.archived) inquiry.status = "CLOSED";
-  return inquiry;
+export async function updateInquiry(input: { id: string; read?: boolean; archived?: boolean }) {
+  return mutateState((store) => {
+    const inquiry = store.inquiries.find((item) => item.id === input.id);
+    if (!inquiry) return null;
+    if (typeof input.read === "boolean") inquiry.read = input.read;
+    if (input.archived) inquiry.status = "CLOSED";
+    return inquiry;
+  });
 }
 
-export function listSettings() {
-  return state().settings;
+export async function listSubscribers() {
+  const store = await loadState();
+  return [...store.subscribers].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function updateSettings(settings: Record<string, string>) {
-  const store = state();
-  for (const [key, value] of Object.entries(settings)) {
-    const existing = store.settings.find((item) => item.key === key);
-    if (existing) existing.value = String(value ?? "");
-    else store.settings.push({ key, value: String(value ?? "") });
-  }
+export async function listSettings() {
+  const store = await loadState();
+  return store.settings;
 }
 
-export function addSubscriber(email: string) {
-  const store = state();
-  const existing = store.subscribers.find((item) => item.email === email);
-  if (existing) return existing;
-  const subscriber: Subscriber = { id: id("subscriber"), email, createdAt: now() };
-  store.subscribers.push(subscriber);
-  return subscriber;
+export async function getSettingsMap() {
+  const settings = await listSettings();
+  return Object.fromEntries(settings.map((item) => [item.key, item.value]));
+}
+
+export async function updateSettings(settings: Record<string, string>) {
+  await mutateState((store) => {
+    for (const [key, value] of Object.entries(settings)) {
+      const existing = store.settings.find((item) => item.key === key);
+      if (existing) existing.value = String(value ?? "");
+      else store.settings.push({ key, value: String(value ?? "") });
+    }
+  });
+}
+
+export async function addSubscriber(email: string) {
+  return mutateState((store) => {
+    const existing = store.subscribers.find((item) => item.email === email);
+    if (existing) return existing;
+    const subscriber: Subscriber = { id: id("subscriber"), email, createdAt: now() };
+    store.subscribers.push(subscriber);
+    return subscriber;
+  });
 }

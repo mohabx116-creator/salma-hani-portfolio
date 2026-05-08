@@ -52,7 +52,7 @@ function AdminArtworks() {
                     <img src={artwork.mainImage} alt={artwork.title} className="size-16 object-cover" />
                     <div>
                       <p className="font-serif text-lg italic">{artwork.title}</p>
-                      <p className="text-xs text-ink-soft">{artwork.year ?? "Undated"} · /artwork/{artwork.slug}</p>
+                      <p className="text-xs text-ink-soft">{artwork.year ?? "Undated"} / /artwork/{artwork.slug}</p>
                     </div>
                   </div>
                 </td>
