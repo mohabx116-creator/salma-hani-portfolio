@@ -3,9 +3,15 @@ import { jwtVerify, SignJWT } from "jose";
 const SESSION_COOKIE = "salma_admin_session";
 const encoder = new TextEncoder();
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
+const FALLBACK_ADMIN_EMAIL = "salmahani963@gmail.com";
+const FALLBACK_ADMIN_PASSWORD = "salmamorv";
+
+function normalizeCredential(value: string): string {
+  return value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+}
 
 function cleanEnvValue(value: string): string {
-  const trimmed = value.trim();
+  const trimmed = normalizeCredential(value);
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
     (trimmed.startsWith("'") && trimmed.endsWith("'"))
@@ -35,28 +41,20 @@ export type AdminSession = {
 };
 
 export function configuredAdminCredentials() {
-  const isProduction = process.env.NODE_ENV === "production";
-  const email = cleanEnvValue(process.env.ADMIN_EMAIL ?? "").toLowerCase();
-  const password = cleanEnvValue(process.env.ADMIN_PASSWORD ?? "");
+  const email = cleanEnvValue(process.env.ADMIN_EMAIL || FALLBACK_ADMIN_EMAIL).toLowerCase();
+  const password = cleanEnvValue(process.env.ADMIN_PASSWORD || FALLBACK_ADMIN_PASSWORD);
   const name = cleanEnvValue(process.env.ADMIN_NAME ?? "") || "Salma Hani";
-
-  if (!email || !password) {
-    const message =
-      "[auth] ADMIN_EMAIL and ADMIN_PASSWORD are not configured. Add them without surrounding quotes.";
-    if (isProduction) console.error(message);
-    else console.warn(message);
-    return null;
-  }
 
   return { email, password, name };
 }
 
 export async function authenticateAdmin(inputEmail: string, inputPassword: string) {
   const configured = configuredAdminCredentials();
-  const submittedPassword = cleanEnvValue(inputPassword);
+  const submittedEmail = normalizeCredential(inputEmail).toLowerCase();
+  const submittedPassword = normalizeCredential(inputPassword);
   const matches =
     configured !== null &&
-    configured.email === inputEmail.toLowerCase().trim() &&
+    configured.email === submittedEmail &&
     configured.password === submittedPassword;
 
   if (!matches) return null;
