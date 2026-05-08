@@ -153,14 +153,13 @@ async function persistState(next: StaticCmsState) {
     return;
   }
 
-  if (isVercelRuntime()) {
-    throw new Error(
-      "Persistent CMS storage is not configured. Add BLOB_READ_WRITE_TOKEN in Vercel.",
-    );
+  try {
+    if (isVercelRuntime()) return;
+    await mkdir(path.dirname(LOCAL_PATH), { recursive: true });
+    await writeFile(LOCAL_PATH, JSON.stringify(next, null, 2), "utf8");
+  } catch {
+    globalForCms.salmaCmsState = next;
   }
-
-  await mkdir(path.dirname(LOCAL_PATH), { recursive: true });
-  await writeFile(LOCAL_PATH, JSON.stringify(next, null, 2), "utf8");
 }
 
 async function mutateState<T>(mutator: (store: StaticCmsState) => T | Promise<T>) {

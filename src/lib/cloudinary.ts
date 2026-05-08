@@ -7,8 +7,24 @@ cloudinary.config({
   secure: true,
 });
 
-export function uploadImage(buffer: Buffer, folder = "salma-hani/artworks") {
+export function uploadImage(
+  buffer: Buffer,
+  folder = "salma-hani/artworks",
+  contentType = "image/png",
+) {
   return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      resolve({
+        url: `data:${contentType};base64,${buffer.toString("base64")}`,
+        publicId: `local-${Date.now()}`,
+      });
+      return;
+    }
+
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
