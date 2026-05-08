@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+const ADMIN_EMAIL = "salmahani963@gmail.com";
+const ADMIN_PASSWORD = "salmamorv";
+const ADMIN_COOKIE = "salma_admin_session";
+const ADMIN_TOKEN = "salma-admin-open-session";
+
 export const Route = createFileRoute("/admin/login")({
   component: AdminLogin,
 });
@@ -13,31 +18,23 @@ function AdminLogin() {
     <div className="grid min-h-screen place-items-center bg-background px-5 text-foreground">
       <form
         className="w-full max-w-md border border-border bg-background/80 p-8 shadow-soft"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault();
           setError("");
           setLoading(true);
+
           const form = new FormData(event.currentTarget);
-          const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              email: form.get("email"),
-              password: form.get("password"),
-            }),
-          });
+          const email = normalizeLoginValue(String(form.get("email") ?? "")).toLowerCase();
+          const password = normalizeLoginValue(String(form.get("password") ?? ""));
+
           setLoading(false);
-          if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            if (response.status === 401) {
-              setError("Invalid email or password.");
-            } else if (response.status === 500) {
-              setError(data?.error || "Server error — check environment variables.");
-            } else {
-              setError(data?.error || "Sign in failed. Please try again.");
-            }
+
+          if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+            setError("Invalid email or password.");
             return;
           }
+
+          document.cookie = `${ADMIN_COOKIE}=${encodeURIComponent(`${ADMIN_TOKEN}:${ADMIN_EMAIL}`)}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`;
           window.location.href = "/admin";
         }}
       >
@@ -79,4 +76,15 @@ function AdminLogin() {
       </form>
     </div>
   );
+}
+
+function normalizeLoginValue(value: string) {
+  const trimmed = value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
 }
