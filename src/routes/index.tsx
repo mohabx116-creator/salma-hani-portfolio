@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, Instagram, LockKeyhole, Mail, Palette } from "lucide-react";
 import { artworks as staticArtworks } from "@/data/artworks";
 
@@ -19,6 +19,14 @@ export const Route = createFileRoute("/")({
 
 function EntrancePage() {
   const artwork = staticArtworks[0];
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((data) => setIsAdmin(data.user?.role === "ADMIN"))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
@@ -34,7 +42,9 @@ function EntrancePage() {
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 md:px-10 lg:px-12">
         <div className="text-center">
           <p className="eyebrow reveal text-gold">Digital Studio Entrance</p>
-          <h1 className="reveal reveal-delay-1 mt-5 font-serif text-5xl italic md:text-7xl">Salma Hani</h1>
+          <h1 className="reveal reveal-delay-1 mt-5 font-serif text-5xl italic md:text-7xl">
+            Salma Hani
+          </h1>
           <p className="reveal reveal-delay-2 mt-4 text-sm uppercase tracking-[0.34em] text-ink-soft md:text-[0.82rem]">
             Fine Artist
           </p>
@@ -45,7 +55,8 @@ function EntrancePage() {
             Welcome to the studio.
           </p>
           <p className="mx-auto mt-4 max-w-[48ch] text-sm leading-7 text-ink-soft md:text-base">
-            Enter as a guest to browse the collection, or continue through studio access to manage the private CMS.
+            Enter as a guest to browse the collection, or continue through studio access to manage
+            the private CMS.
           </p>
         </div>
 
@@ -59,12 +70,16 @@ function EntrancePage() {
             accent="Guest Entry"
           />
           <EntryCard
-            to="/admin/login"
+            to={isAdmin ? "/admin" : "/admin/login"}
             eyebrow="Private Studio"
-            title="Studio Access"
-            description="Reserved for Salma to manage artworks, inquiries, settings, and the full content system."
+            title={isAdmin ? "Open Dashboard" : "Studio Access"}
+            description={
+              isAdmin
+                ? "You are signed in. Continue directly to the CMS dashboard, analytics, artworks, and settings."
+                : "Reserved for Salma to manage artworks, inquiries, settings, and the full content system."
+            }
             icon={<LockKeyhole className="size-5" />}
-            accent="Staff Only"
+            accent={isAdmin ? "Admin Session" : "Staff Only"}
           />
         </div>
 
@@ -72,17 +87,27 @@ function EntrancePage() {
           <div>
             <p className="text-[10px] uppercase tracking-[0.32em] text-ink-soft">Studio Contact</p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-5 text-sm text-foreground md:justify-start">
-              <a href="https://instagram.com/__morvii_" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-gold">
+              <a
+                href="https://instagram.com/__morvii_"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 hover:text-gold"
+              >
                 <Instagram className="size-4" />
                 Instagram
               </a>
-              <a href="mailto:studio@salma-hani.com" className="inline-flex items-center gap-2 hover:text-gold">
+              <a
+                href="mailto:studio@salma-hani.com"
+                className="inline-flex items-center gap-2 hover:text-gold"
+              >
                 <Mail className="size-4" />
                 studio@salma-hani.com
               </a>
             </div>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-ink-soft">Copyright 2026 Salma Hani</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-ink-soft">
+            Copyright 2026 Salma Hani
+          </p>
         </footer>
       </div>
     </main>
@@ -97,7 +122,7 @@ function EntryCard({
   icon,
   accent,
 }: {
-  to: "/home" | "/admin/login";
+  to: "/home" | "/admin/login" | "/admin";
   eyebrow: string;
   title: string;
   description: string;
@@ -119,7 +144,9 @@ function EntryCard({
         </div>
         <p className="mt-8 text-[10px] uppercase tracking-[0.3em] text-ink-soft">{eyebrow}</p>
         <h2 className="mt-4 font-serif text-3xl italic md:text-4xl">{title}</h2>
-        <p className="mt-5 max-w-[34ch] text-sm leading-7 text-ink-soft md:text-base">{description}</p>
+        <p className="mt-5 max-w-[34ch] text-sm leading-7 text-ink-soft md:text-base">
+          {description}
+        </p>
       </div>
 
       <div className="mt-8 border-t border-border/60 pt-5">

@@ -4,6 +4,7 @@ import path from "node:path";
 import { list, put } from "@vercel/blob";
 import { artworks as bundledArtworks } from "@/data/artworks";
 import type {
+  AnalyticsEvent,
   Availability,
   CmsArtwork,
   CmsSeries,
@@ -19,6 +20,7 @@ type StaticCmsState = {
   series: CmsSeries[];
   settings: SiteSetting[];
   subscribers: Subscriber[];
+  analytics: AnalyticsEvent[];
 };
 
 type SeriesWithCount = CmsSeries & { _count: { artworks: number } };
@@ -95,17 +97,21 @@ function initialState(): StaticCmsState {
       { key: "metaDescription", value: "Fine art portfolio of Salma Hani M." },
     ],
     subscribers: [],
+    analytics: [],
   };
 }
 
 function normalizeState(input: Partial<StaticCmsState> | null | undefined): StaticCmsState {
   const fallback = initialState();
   return {
-    artworks: Array.isArray(input?.artworks) && input.artworks.length ? input.artworks : fallback.artworks,
+    artworks:
+      Array.isArray(input?.artworks) && input.artworks.length ? input.artworks : fallback.artworks,
     inquiries: Array.isArray(input?.inquiries) ? input.inquiries : fallback.inquiries,
     series: Array.isArray(input?.series) ? input.series : fallback.series,
-    settings: Array.isArray(input?.settings) && input.settings.length ? input.settings : fallback.settings,
+    settings:
+      Array.isArray(input?.settings) && input.settings.length ? input.settings : fallback.settings,
     subscribers: Array.isArray(input?.subscribers) ? input.subscribers : fallback.subscribers,
+    analytics: Array.isArray(input?.analytics) ? input.analytics : fallback.analytics,
   };
 }
 
@@ -148,7 +154,9 @@ async function persistState(next: StaticCmsState) {
   }
 
   if (isVercelRuntime()) {
-    throw new Error("Persistent CMS storage is not configured. Add BLOB_READ_WRITE_TOKEN in Vercel.");
+    throw new Error(
+      "Persistent CMS storage is not configured. Add BLOB_READ_WRITE_TOKEN in Vercel.",
+    );
   }
 
   await mkdir(path.dirname(LOCAL_PATH), { recursive: true });
@@ -163,7 +171,9 @@ async function mutateState<T>(mutator: (store: StaticCmsState) => T | Promise<T>
 }
 
 function withSeries(store: StaticCmsState, artwork: CmsArtwork) {
-  const series = artwork.seriesId ? store.series.find((item) => item.id === artwork.seriesId) : null;
+  const series = artwork.seriesId
+    ? store.series.find((item) => item.id === artwork.seriesId)
+    : null;
   return { ...artwork, series: series ?? null };
 }
 
@@ -268,7 +278,11 @@ export async function listSeries(): Promise<SeriesWithCount[]> {
     .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
 }
 
-export async function createSeries(input: { name: string; slug?: string; description?: string | null }) {
+export async function createSeries(input: {
+  name: string;
+  slug?: string;
+  description?: string | null;
+}) {
   return mutateState((store) => {
     const series: CmsSeries = {
       id: id("series"),
@@ -345,5 +359,33 @@ export async function addSubscriber(email: string) {
     const subscriber: Subscriber = { id: id("subscriber"), email, createdAt: now() };
     store.subscribers.push(subscriber);
     return subscriber;
+  });
+}
+
+export async function listAnalytics(limit = 500) {
+  const store = await loadState();
+  return [...store.analytics]
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    .slice(0, Math.max(1, Math.min(limit, 5000)));
+}
+
+export async function trackAnalyticsEvent(input: {
+  page: string;
+  event: AnalyticsEvent["event"];
+  metadata?: AnalyticsEvent["metadata"];
+}) {
+  return mutateState((store) => {
+    const event: AnalyticsEvent = {
+      id: id("event"),
+      page: input.page.slice(0, 240),
+      event: input.event.slice(0, 80),
+      metadata: input.metadata ?? {},
+      timestamp: now(),
+    };
+    store.analytics.push(event);
+    if (store.analytics.length > 5000) {
+      store.analytics = store.analytics.slice(-5000);
+    }
+    return event;
   });
 }

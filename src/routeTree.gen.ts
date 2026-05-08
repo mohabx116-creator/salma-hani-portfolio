@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ServiceWorkerDotjsRouteImport } from './routes/service-worker[.]js'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -21,9 +23,11 @@ import { Route as ApiUploadRouteImport } from './routes/api.upload'
 import { Route as ApiNewsletterRouteImport } from './routes/api.newsletter'
 import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as ApiArtworksRouteImport } from './routes/api.artworks'
+import { Route as ApiAnalyticsRouteImport } from './routes/api.analytics'
 import { Route as AdminSubscribersRouteImport } from './routes/admin.subscribers'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeriesRouteImport } from './routes/admin.series'
+import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminInquiriesRouteImport } from './routes/admin.inquiries'
 import { Route as AdminArtworksRouteImport } from './routes/admin.artworks'
@@ -45,9 +49,19 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServiceWorkerDotjsRoute = ServiceWorkerDotjsRouteImport.update({
+  id: '/service-worker.js',
+  path: '/service-worker.js',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -100,6 +114,11 @@ const ApiArtworksRoute = ApiArtworksRouteImport.update({
   path: '/api/artworks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAnalyticsRoute = ApiAnalyticsRouteImport.update({
+  id: '/api/analytics',
+  path: '/api/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
   id: '/subscribers',
   path: '/subscribers',
@@ -113,6 +132,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
 const AdminSeriesRoute = AdminSeriesRouteImport.update({
   id: '/series',
   path: '/series',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMediaRoute = AdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
@@ -197,14 +221,18 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/service-worker.js': typeof ServiceWorkerDotjsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/artworks': typeof AdminArtworksRouteWithChildren
   '/admin/inquiries': typeof AdminInquiriesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/api/analytics': typeof ApiAnalyticsRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -228,14 +256,18 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/service-worker.js': typeof ServiceWorkerDotjsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/artworks': typeof AdminArtworksRouteWithChildren
   '/admin/inquiries': typeof AdminInquiriesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/api/analytics': typeof ApiAnalyticsRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -261,14 +293,18 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/service-worker.js': typeof ServiceWorkerDotjsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/artworks': typeof AdminArtworksRouteWithChildren
   '/admin/inquiries': typeof AdminInquiriesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
   '/admin/series': typeof AdminSeriesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/api/analytics': typeof ApiAnalyticsRoute
   '/api/artworks': typeof ApiArtworksRoute
   '/api/contact': typeof ApiContactRoute
   '/api/newsletter': typeof ApiNewsletterRoute
@@ -295,14 +331,18 @@ export interface FileRouteTypes {
     | '/admin'
     | '/home'
     | '/login'
+    | '/manifest.webmanifest'
     | '/robots.txt'
+    | '/service-worker.js'
     | '/sitemap.xml'
     | '/admin/artworks'
     | '/admin/inquiries'
     | '/admin/login'
+    | '/admin/media'
     | '/admin/series'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/api/analytics'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -326,14 +366,18 @@ export interface FileRouteTypes {
     | '/'
     | '/home'
     | '/login'
+    | '/manifest.webmanifest'
     | '/robots.txt'
+    | '/service-worker.js'
     | '/sitemap.xml'
     | '/admin/artworks'
     | '/admin/inquiries'
     | '/admin/login'
+    | '/admin/media'
     | '/admin/series'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/api/analytics'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -358,14 +402,18 @@ export interface FileRouteTypes {
     | '/admin'
     | '/home'
     | '/login'
+    | '/manifest.webmanifest'
     | '/robots.txt'
+    | '/service-worker.js'
     | '/sitemap.xml'
     | '/admin/artworks'
     | '/admin/inquiries'
     | '/admin/login'
+    | '/admin/media'
     | '/admin/series'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/api/analytics'
     | '/api/artworks'
     | '/api/contact'
     | '/api/newsletter'
@@ -391,8 +439,11 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  ManifestDotwebmanifestRoute: typeof ManifestDotwebmanifestRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  ServiceWorkerDotjsRoute: typeof ServiceWorkerDotjsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiAnalyticsRoute: typeof ApiAnalyticsRoute
   ApiArtworksRoute: typeof ApiArtworksRoute
   ApiContactRoute: typeof ApiContactRoute
   ApiNewsletterRoute: typeof ApiNewsletterRoute
@@ -417,11 +468,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/service-worker.js': {
+      id: '/service-worker.js'
+      path: '/service-worker.js'
+      fullPath: '/service-worker.js'
+      preLoaderRoute: typeof ServiceWorkerDotjsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/robots.txt': {
       id: '/robots.txt'
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -494,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiArtworksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/analytics': {
+      id: '/api/analytics'
+      path: '/api/analytics'
+      fullPath: '/api/analytics'
+      preLoaderRoute: typeof ApiAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/subscribers': {
       id: '/admin/subscribers'
       path: '/subscribers'
@@ -513,6 +585,13 @@ declare module '@tanstack/react-router' {
       path: '/series'
       fullPath: '/admin/series'
       preLoaderRoute: typeof AdminSeriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/media': {
+      id: '/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/login': {
@@ -641,6 +720,7 @@ interface AdminRouteChildren {
   AdminArtworksRoute: typeof AdminArtworksRouteWithChildren
   AdminInquiriesRoute: typeof AdminInquiriesRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminMediaRoute: typeof AdminMediaRoute
   AdminSeriesRoute: typeof AdminSeriesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSubscribersRoute: typeof AdminSubscribersRoute
@@ -651,6 +731,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminArtworksRoute: AdminArtworksRouteWithChildren,
   AdminInquiriesRoute: AdminInquiriesRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminMediaRoute: AdminMediaRoute,
   AdminSeriesRoute: AdminSeriesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSubscribersRoute: AdminSubscribersRoute,
@@ -677,8 +758,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  ManifestDotwebmanifestRoute: ManifestDotwebmanifestRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  ServiceWorkerDotjsRoute: ServiceWorkerDotjsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiAnalyticsRoute: ApiAnalyticsRoute,
   ApiArtworksRoute: ApiArtworksRoute,
   ApiContactRoute: ApiContactRoute,
   ApiNewsletterRoute: ApiNewsletterRoute,

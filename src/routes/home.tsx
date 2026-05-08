@@ -12,10 +12,15 @@ import { Nav } from "@/components/site/Nav";
 import { Shop } from "@/components/site/Shop";
 import { Social } from "@/components/site/Social";
 import { artworks as staticArtworks } from "@/data/artworks";
+import { usePageAnalytics } from "@/hooks/useAnalytics";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/i18n/ThemeContext";
 import type { CmsArtwork } from "@/lib/cms-types";
-import { cmsArtworkToSiteArtwork, staticArtworkToSiteArtwork, type SiteArtwork } from "@/lib/site-artworks";
+import {
+  cmsArtworkToSiteArtwork,
+  staticArtworkToSiteArtwork,
+  type SiteArtwork,
+} from "@/lib/site-artworks";
 
 export const Route = createFileRoute("/home")({
   loader: async () => {
@@ -46,6 +51,8 @@ function HomePage() {
   const shopItems = artworks.filter(
     (artwork) => artwork.available && artwork.showPrice && typeof artwork.price === "number",
   );
+
+  usePageAnalytics("page_view", { surface: "portfolio" });
 
   useEffect(() => {
     if (typeof window === "undefined") return;

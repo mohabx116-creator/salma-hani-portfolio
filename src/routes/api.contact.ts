@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Resend } from "resend";
 import { checkRateLimit, clientKey, json } from "@/lib/auth";
-import { createInquiry, findArtworkBySlug } from "@/lib/static-cms";
+import { createInquiry, findArtworkBySlug, trackAnalyticsEvent } from "@/lib/static-cms";
 
 export const Route = createFileRoute("/api/contact")({
   server: {
@@ -37,6 +37,14 @@ export const Route = createFileRoute("/api/contact")({
           message,
           artworkId: artwork?.id,
           artworkSlug,
+        });
+        await trackAnalyticsEvent({
+          page: artworkSlug ? `/artwork/${artworkSlug}` : "/home#contact",
+          event: "contact_submit",
+          metadata: {
+            interest,
+            artworkSlug,
+          },
         });
 
         if (process.env.RESEND_API_KEY && process.env.CONTACT_TO_EMAIL) {

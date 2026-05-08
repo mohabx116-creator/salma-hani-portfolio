@@ -1,10 +1,11 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Image, Inbox, LogOut, Palette, Settings, Users } from "lucide-react";
+import { BarChart3, Images, Image, Inbox, LogOut, Palette, Settings, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const nav = [
   { to: "/admin", label: "Dashboard", icon: BarChart3 },
   { to: "/admin/artworks", label: "Artworks", icon: Image },
+  { to: "/admin/media", label: "Media", icon: Images },
   { to: "/admin/series", label: "Series", icon: Palette },
   { to: "/admin/inquiries", label: "Inquiries", icon: Inbox },
   { to: "/admin/subscribers", label: "Subscribers", icon: Users },
@@ -48,7 +49,9 @@ export function AdminShell() {
                 key={item.to}
                 href={item.to}
                 className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm transition-colors ${
-                  active ? "bg-gold/10 text-gold" : "text-ink-soft hover:bg-muted hover:text-foreground"
+                  active
+                    ? "bg-gold/10 text-gold"
+                    : "text-ink-soft hover:bg-muted hover:text-foreground"
                 }`}
               >
                 <Icon className="size-4" />

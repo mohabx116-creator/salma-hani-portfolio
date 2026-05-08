@@ -10,7 +10,9 @@ export function Contact() {
     <section id="contact" className="py-32 md:py-48 px-[5vw]">
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow">{t.contact.eyebrow}</p>
-        <h2 className="mt-5 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">{t.contact.title}</h2>
+        <h2 className="mt-5 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">
+          {t.contact.title}
+        </h2>
         <p className="mt-5 text-ink-soft font-light">{t.contact.sub}</p>
 
         <form
@@ -18,6 +20,7 @@ export function Contact() {
             e.preventDefault();
             setError("");
             const form = new FormData(e.currentTarget);
+            const interest = String(form.get("interest") ?? "General");
             const artworkSlug =
               typeof window !== "undefined"
                 ? new URLSearchParams(window.location.search).get("artwork")
@@ -28,7 +31,7 @@ export function Contact() {
               body: JSON.stringify({
                 name: form.get("name"),
                 email: form.get("email"),
-                interest: form.get("interest"),
+                interest,
                 message: form.get("message"),
                 company: form.get("company"),
                 artworkSlug,
@@ -94,7 +97,9 @@ export function Contact() {
 function Field({ label, name, type = "text" }: { label: string; name: string; type?: string }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-[0.3em] text-ink-soft mb-3">{label}</label>
+      <label className="block text-[10px] uppercase tracking-[0.3em] text-ink-soft mb-3">
+        {label}
+      </label>
       <input
         required
         name={name}

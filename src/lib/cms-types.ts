@@ -69,6 +69,14 @@ export type SiteSetting = {
   value: string;
 };
 
+export type AnalyticsEvent = {
+  id: string;
+  page: string;
+  event: "page_view" | "project_view" | "contact_submit" | string;
+  metadata?: Record<string, string | number | boolean | null>;
+  timestamp: string;
+};
+
 export const MEDIUM_OPTIONS = [
   "Oil on canvas",
   "Oil on panel",

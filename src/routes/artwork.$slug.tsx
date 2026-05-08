@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArtworkLightbox } from "@/components/site/ArtworkLightbox";
 import { Footer } from "@/components/site/Footer";
 import { Nav } from "@/components/site/Nav";
 import { artworks } from "@/data/artworks";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/i18n/ThemeContext";
+import { trackAnalyticsEvent } from "@/hooks/useAnalytics";
 import type { CmsArtwork } from "@/lib/cms-types";
 
 export const Route = createFileRoute("/artwork/$slug")({
@@ -76,7 +77,8 @@ function ArtworkDetail() {
   const [artwork, setArtwork] = useState<CmsArtwork | null>(initialArtwork);
   const [loaded, setLoaded] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  
+  const trackedSlug = useRef<string | null>(null);
+
   useEffect(() => {
     fetch(`/api/artworks?slug=${encodeURIComponent(params.slug)}`)
       .then((response) => response.json())
@@ -86,6 +88,16 @@ function ArtworkDetail() {
       .catch(() => undefined)
       .finally(() => setLoaded(true));
   }, [initialArtwork, params.slug]);
+
+  useEffect(() => {
+    if (!artwork || trackedSlug.current === artwork.slug) return;
+    trackedSlug.current = artwork.slug;
+    trackAnalyticsEvent("project_view", `/artwork/${artwork.slug}`, {
+      artworkId: artwork.id,
+      title: artwork.title,
+      medium: artwork.medium,
+    });
+  }, [artwork]);
 
   if (!artwork) {
     return (
